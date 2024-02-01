@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+    app:
+        build:
+            context: .
+            args:
+                - DEV=true
+        ports:
+            - "8000:8000"
+        volumes:
+            - ./app:/app
+            - dev-static-data:/vol/web
+        command: >
+            sh -c "python manage.py wait_for_db &&
+                   python manage.py migrate &&
+                   python manage.py runserver 0.0.0.0:8000"
+        environment:
+            - DB_HOST=db
+            - DB_NAME=devdb
+            - DB_USER=devuser
+            - DB_PASS=changeme
+            - DEBUG=1
+
+        depends_on:
+            - db
+            - redis
+            - celery
+            - celery_beat 
+    db:
+        image: postgres:13-alpine
+        volumes:
+            - dev-db-data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_DB=devdb
+            - POSTGRES_USER=devuser
+            - POSTGRES_PASSWORD=changeme
+
+    redis:
+        image: "redis:latest"
+        ports:
+            - "6379:6379"
+        command: redis-server --bind 0.0.0.0
+
+    celery:
+        build: .
+        depends_on:
+            - redis
+        command: celery -A job worker -l info
+
+    celery_beat:
+        build:
+            context: .
+        command: celery -A job beat -l info
+        volumes:
+            - ./app:/app
+        depends_on:
+            - redis
+            - celery
+        environment:
+            - CELERYBEAT_CHDIR=/app/job
+
+volumes:
+    dev-db-data:
+    dev-static-data:
