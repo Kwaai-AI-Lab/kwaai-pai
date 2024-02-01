@@ -152,6 +152,7 @@ class ImapInboxHandler:
         try:
             df_unseen_emails = df_unseen_emails.with_columns(
                 pl.concat_str(
+                    df_unseen_emails['Id'],
                     df_unseen_emails['Subject'],
                     df_unseen_emails['Sender'],
                     df_unseen_emails['Date'],
@@ -167,35 +168,39 @@ class ImapInboxHandler:
             with torch.no_grad():
                 outputs = self.model(**batch_encoding)
                 predictions = F.softmax(outputs.logits, dim=1)
-                labels = torch.argmax(predictions, dim=1)
-
-            df_final = pl.DataFrame({'text': X_test,'label_hf': labels.tolist()})
+                labels = torch.argmax(predictions, dim=1)           
             
-            df_final = df_final.with_columns(
-                df_unseen_emails['Id'].alias('Id'),
+            
+            df_final = pl.DataFrame({'text': X_test,'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id']})
+            
+            df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
+
+            donot_answered_emails_ids = list(map(int, donot_answered_emails_ids))
+
+            df_dot_not_reply = df_final.filter(pl.col('Id').is_in(donot_answered_emails_ids))
+
+            df_dot_not_reply = df_dot_not_reply.with_columns(
+                df_dot_not_reply['label_hf'].replace([0], [1])
             )
 
-            clean_emails = []               
-            for i in range(len(df_final)): 
-                if df_final['label_hf'][i] == 0 and df_final['Id'][i] not in donot_answered_emails_ids:                    
-                    clean_emails.append(df_final['text'][i])
-                elif df_final['label_hf'][i] == 0 and df_final['Id'][i] in donot_answered_emails_ids:
-                    df_new = pl.DataFrame({'label': [1] * len(donot_answered_emails_ids), 'Id': donot_answered_emails_ids})
-                else:
-                    df_new = pl.DataFrame({'label': df_final['label_hf'][i] * len(df_final), 'Id': df_final['Id'][i]})
+            df_final = df_final.join(df_dot_not_reply, on='Id', how='left').fill_null(df_final['label_hf'])
 
-            
-            df_final_left = df_final.join(df_new, on='Id', how='left').fill_null(0)
+            df_ids = pl.DataFrame({'Id': df_unseen_emails['Id']})
+            df_final = pl.concat([df_ids, df_final], how="horizontal")
+            clean_emails= []
 
+            for i in range(len(df_final)):
+                if df_final['label'][i] == 0:
+                    clean_emails.append(df_final['text'][i], df_final['Id'][i])
 
             result_list = []
             for item in clean_emails:
                 parts = item.split("||")  
-                subject, sender, date, body = parts[:4]  
-                result_dict = {'Subject': subject, 'From': sender, 'Date': date, 'Body': body}
+                id, subject, sender, date, body = parts[:5]  
+                result_dict = {'Id': id , 'Subject': subject, 'From': sender, 'Date': date, 'Body': body}
                 result_list.append(result_dict)
 
-            return clean_emails, df_final_left, result_list
+            return clean_emails, df_final, result_list
         
         except pl.exceptions.PolarsError as e:
             return (f"Empty Data Error: {e}")
