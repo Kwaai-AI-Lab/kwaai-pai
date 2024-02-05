@@ -19,7 +19,7 @@ class ImapEmailHandler:
     def fetch_emails(self, mail_id_list):
         msgs = []
         for num in mail_id_list:
-            typ, data = self.mail.fetch(num, '(RFC822)')
+            _, data = self.mail.fetch(num, '(RFC822)')
             msgs.append(data)
         return msgs
     
