@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from openai import OpenAI
 import os
 
-CLIENT = OpenAI(api_key="sk-Mb7tJ7f865Uca9SkjiymT3BlbkFJ8gt599")
+CLIENT = OpenAI(api_key="sk-******")
 MODEL_NAME = "NotShrirang/albert-spam-filter"
 class ImapInboxHandler:
     def __init__(
@@ -84,12 +84,18 @@ class ImapInboxHandler:
         """       
         data_list = []
         
-        for msg in unseen_msgs:
-            msg_id, subject, sender, date, body = self.extract_email_info(msg)                                       
-            data_list.append({'Id': msg_id, 'Subject': subject, 'Sender': sender, 'Date': date, 'Body': body})
-                      
-        df_unseen_emails = pl.DataFrame(data_list).select(pl.all().str.to_lowercase())        
-        return df_unseen_emails  
+        if not unseen_msgs:
+            print("No unseen emails")
+            return  
+        else:
+            for msg in unseen_msgs:
+                msg_id, subject, sender, date, body = self.extract_email_info(msg)                                       
+                data_list.append({'Id': msg_id, 'Subject': subject, 'Sender': sender, 'Date': date, 'Body': body})
+                        
+            df_unseen_emails = pl.DataFrame(data_list).select(pl.all().str.to_lowercase())        
+            return df_unseen_emails
+       
+         
     
     
     def get_donot_reply_emails(self, unseen_msgs, words):
@@ -168,31 +174,29 @@ class ImapInboxHandler:
             with torch.no_grad():
                 outputs = self.model(**batch_encoding)
                 predictions = F.softmax(outputs.logits, dim=1)
-                labels = torch.argmax(predictions, dim=1)           
-            
-            
-            df_final = pl.DataFrame({'text': X_test,'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id']})
+                labels = torch.argmax(predictions, dim=1)   
+
+            df_final = pl.DataFrame({'text': X_test, 'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id'].cast(pl.Int64)})                      
             
             df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
-
             donot_answered_emails_ids = list(map(int, donot_answered_emails_ids))
-
-            df_dot_not_reply = df_final.filter(pl.col('Id').is_in(donot_answered_emails_ids))
-
-            df_dot_not_reply = df_dot_not_reply.with_columns(
-                df_dot_not_reply['label_hf'].replace([0], [1])
+            
+            df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answered_emails_ids)) 
+            
+            df_no_reply = df_no_reply.with_columns(
+                df_no_reply['label_hf'].replace([0], [1])
             )
-
-            df_final = df_final.join(df_dot_not_reply, on='Id', how='left').fill_null(df_final['label_hf'])
-
-            df_ids = pl.DataFrame({'Id': df_unseen_emails['Id']})
-            df_final = pl.concat([df_ids, df_final], how="horizontal")
-            clean_emails= []
-
+            
+            df_final = df_final.join(df_no_reply, on='Id', how='left').fill_null(df_final['label_hf'])            
+            df_final = df_final.drop(['text_right', 'label_hf'])
+            df_final = df_final.rename({'label_hf_right': 'label'})
+            df_final = df_final.with_columns(df_final['Id'].cast(str)) 
+            
+            clean_emails= []           
             for i in range(len(df_final)):
                 if df_final['label'][i] == 0:
-                    clean_emails.append(df_final['text'][i], df_final['Id'][i])
-
+                    clean_emails.append(df_final['text'][i])
+            
             result_list = []
             for item in clean_emails:
                 parts = item.split("||")  
@@ -200,14 +204,14 @@ class ImapInboxHandler:
                 result_dict = {'Id': id , 'Subject': subject, 'From': sender, 'Date': date, 'Body': body}
                 result_list.append(result_dict)
 
-            return clean_emails, df_final, result_list
+            return result_list, df_final
         
         except pl.exceptions.PolarsError as e:
-            return (f"Empty Data Error: {e}")
+            return [], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
         except ValueError as e:
-            return (f"Value Error: {e}")
+            return [], pl.DataFrame({'error_message': [f"Value Error: {e}"]})
         except Exception as e:
-            return (f"Unexpected Error: {e}")
+            return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
         
     def tag_emails(self, df_final, new_directories):
             """

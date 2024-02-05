@@ -15,7 +15,7 @@ def process_unseen_emails():
 
         for unseen_email in unseen_emails:
             llm_response = create_email_draft(
-                to_address=unseen_emails['From'],
+                to_address=unseen_emails['From'],                
                 subject='Re: ' + unseen_email['Subject'],
                 prompt="Write an email to the following message: " + unseen_email['Body']
             )
