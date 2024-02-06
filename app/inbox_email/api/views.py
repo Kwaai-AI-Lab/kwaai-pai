@@ -10,7 +10,7 @@ class ImapInboxView(generics.GenericAPIView):
     
     def post(self, request,*args, **kwargs):
         try:
-            unseen_emails, _ = check_unseen_emails()
+            unseen_emails = check_unseen_emails()
 
             return Response(unseen_emails, status=status.HTTP_200_OK)        
         except json.JSONDecodeError as e:

@@ -7,6 +7,9 @@ import polars as pl
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import torch.nn.functional as F
+import json
+from rest_framework.response import Response
+from rest_framework import status, generics
 
 from openai import OpenAI
 import os
@@ -83,17 +86,20 @@ class ImapInboxHandler:
             df_unseen_emails (pl.DataFrame): DataFrame of unseen emails.
         """       
         data_list = []
-        
-        if not unseen_msgs:
-            print("No unseen emails")
-            return  
-        else:
-            for msg in unseen_msgs:
-                msg_id, subject, sender, date, body = self.extract_email_info(msg)                                       
-                data_list.append({'Id': msg_id, 'Subject': subject, 'Sender': sender, 'Date': date, 'Body': body})
-                        
-            df_unseen_emails = pl.DataFrame(data_list).select(pl.all().str.to_lowercase())        
-            return df_unseen_emails
+        try:
+            if not unseen_msgs:
+                print("No unseen emails")
+                df_unseen_emails = pl.DataFrame()
+                return  df_unseen_emails 
+            else:
+                for msg in unseen_msgs:
+                    msg_id, subject, sender, date, body = self.extract_email_info(msg)                                       
+                    data_list.append({'Id': msg_id, 'Subject': subject, 'Sender': sender, 'Date': date, 'Body': body})
+                            
+                df_unseen_emails = pl.DataFrame(data_list).select(pl.all().str.to_lowercase())        
+                return df_unseen_emails
+        except json.JSONDecodeError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)    
        
          
     
@@ -211,6 +217,8 @@ class ImapInboxHandler:
         except ValueError as e:
             return [], pl.DataFrame({'error_message': [f"Value Error: {e}"]})
         except Exception as e:
+            return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
+        except pl.exceptions.ColumnNotFoundError as e:
             return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
         
     def tag_emails(self, df_final, new_directories):
