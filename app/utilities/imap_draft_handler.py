@@ -29,7 +29,7 @@ class ImapDraftHandler:
         message.attach(MIMEText(body, 'plain'))
         raw_string = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-        # thread_id = '18d659b8fc7352b7'
+        # thread_id = '18d67226bcd27a90'
 
         # request_body = {
         #     'message': {'raw': raw_string, 'threadId': thread_id}
