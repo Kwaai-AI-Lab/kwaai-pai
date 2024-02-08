@@ -1,6 +1,7 @@
 from imaplib import IMAP4_SSL
 from email import message_from_bytes
 from email.utils import parsedate_to_datetime
+import email
 
 class ImapEmailHandler:
     def __init__(self, user, password, imap_server='imap.gmail.com') -> None:
