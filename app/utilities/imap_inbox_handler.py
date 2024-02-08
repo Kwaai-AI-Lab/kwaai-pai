@@ -2,7 +2,6 @@ from imaplib import IMAP4_SSL
 
 from email import message_from_bytes
 from email.header import decode_header
-from io import BytesIO
 import polars as pl
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
@@ -14,7 +13,7 @@ from rest_framework import status, generics
 from openai import OpenAI
 import os
 
-CLIENT = OpenAI(api_key="sk-******")
+CLIENT = OpenAI(api_key="sk-****")
 MODEL_NAME = "NotShrirang/albert-spam-filter"
 class ImapInboxHandler:
     def __init__(
@@ -42,23 +41,29 @@ class ImapInboxHandler:
             msg_data (tuple): Tuple of email message data.
             
         Returns:
-            msg_id (str): Email message id.
+            id (str): Email message id.
             subject (str): Email message subject.
             sender (str): Email message sender.
             date (str): Email message date.
             body (str): Email message body.
+            message_id (str): Email Message ID.
         """
         msg_bytes = msg_data[0][1]
         msg = message_from_bytes(msg_bytes)
         
-        msg_id = msg_data[0][0].decode().split()[0]
+        id = msg_data[0][0].decode().split()[0]
 
         subject, encoding = decode_header(msg.get('Subject', 'No Subject'))[0]
         if isinstance(subject, bytes):
-            subject = subject.decode(encoding or 'utf-8')           
+            subject = subject.decode(encoding or 'utf-8')
+
         sender, encoding = decode_header(msg.get('From', 'No Sender'))[0]
         if isinstance(sender, bytes):
-            sender = sender.decode(encoding or 'utf-8')           
+            sender = sender.decode(encoding or 'utf-8')
+
+        message_id, encoding = decode_header(msg.get('Message-ID', 'No Message ID'))[0]
+        if isinstance(message_id, bytes):
+            message_id = message_id.decode(encoding or 'utf-8')            
 
         date = msg.get('Date', 'No Date')
 
@@ -71,8 +76,7 @@ class ImapInboxHandler:
         else:
             body = msg.get_payload(decode=True).decode(msg.get_content_charset() or 'utf-8')
 
-        return msg_id, subject, sender, date, body
-    
+        return id, subject, sender, date, body, message_id    
     
     
     def create_df_unseen_emails(self, unseen_msgs): 
@@ -93,16 +97,14 @@ class ImapInboxHandler:
                 return  df_unseen_emails 
             else:
                 for msg in unseen_msgs:
-                    msg_id, subject, sender, date, body = self.extract_email_info(msg)                                       
-                    data_list.append({'Id': msg_id, 'Subject': subject, 'Sender': sender, 'Date': date, 'Body': body})
+                    id, subject, sender, date, body, message_id = self.extract_email_info(msg)                                       
+                    data_list.append({'Id': id, 'Subject': subject, 'Sender': sender, 'Date': date, 'Body': body, 'Message-ID': message_id})
                             
-                df_unseen_emails = pl.DataFrame(data_list).select(pl.all().str.to_lowercase())        
+                df_unseen_emails = pl.DataFrame(data_list).select(pl.all())        
                 return df_unseen_emails
         except json.JSONDecodeError as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)    
-       
-         
-    
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)  
+        
     
     def get_donot_reply_emails(self, unseen_msgs, words):
         """
@@ -111,14 +113,17 @@ class ImapInboxHandler:
         Args:
             unseen_msgs (list): List of unseen emails.
             WORDS (list): List of words.
+
+        Returns:
+            not_answered_emails_ids (list): List of "do not answer emails".
         """
         
         not_answered_emails_ids = []
         data_list = []
         
         for msg in unseen_msgs:
-            msg_id, subject, sender, _, body = self.extract_email_info(msg)
-            data_list.append({'Id': msg_id, 'Subject': subject, 'Sender': sender, 'Body': body})
+            id, subject, sender, _, body, message_id  = self.extract_email_info(msg)
+            data_list.append({'Id': id, 'Subject': subject, 'Sender': sender, 'Body': body,'Message-ID': message_id})
            
         for email_data in data_list:
             subject_lower = email_data['Subject'].lower()
@@ -131,15 +136,14 @@ class ImapInboxHandler:
         return not_answered_emails_ids
             
                 
-    def create_directories(self, new_directories,):
+    def create_directories(self, new_directories):
         """
         This function extract a list of directories.
         If some directory does'nt exist, it will be created.
         
         Args:
             new_directories (list): List of new directories.
-        Args:
-            new_directories (list): List of new directories.
+       
         """
         directories=[]
         for directory in self.mail.list()[1]:
@@ -148,8 +152,8 @@ class ImapInboxHandler:
             if new_directory not in directories:
                 self.mail.create(new_directory)
 
-      
-    def filter_unseen_emails(self, df_unseen_emails, donot_answered_emails_ids): 
+
+    def filter_unseen_emails(self, df_unseen_emails, donot_answer_mail_ids): 
         """
         This function rules out emails no-reply, 
         unsuscribe or potential spam, and keeps a list of clean emails.
@@ -169,6 +173,7 @@ class ImapInboxHandler:
                     df_unseen_emails['Sender'],
                     df_unseen_emails['Date'],
                     df_unseen_emails['Body'],
+                    df_unseen_emails['Message-ID'],
                     separator='||'
                 ).alias('text'),
             )
@@ -185,9 +190,9 @@ class ImapInboxHandler:
             df_final = pl.DataFrame({'text': X_test, 'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id'].cast(pl.Int64)})                      
             
             df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
-            donot_answered_emails_ids = list(map(int, donot_answered_emails_ids))
+            donot_answer_mail_ids = list(map(int, donot_answer_mail_ids))
             
-            df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answered_emails_ids)) 
+            df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answer_mail_ids)) 
             
             df_no_reply = df_no_reply.with_columns(
                 df_no_reply['label_hf'].replace([0], [1])
@@ -206,9 +211,11 @@ class ImapInboxHandler:
             result_list = []
             for item in clean_emails:
                 parts = item.split("||")  
-                id, subject, sender, date, body = parts[:5]  
-                result_dict = {'Id': id , 'Subject': subject, 'From': sender, 'Date': date, 'Body': body}
+                id, subject, sender, date, body, message_id= parts[:6]  
+                result_dict = {'Id': id , 'Subject': subject, 'From': sender, 'Date': date, 'Body': body, 'Message-ID': message_id}
                 result_list.append(result_dict)
+
+            print('result_list: ',result_list)
 
             return result_list, df_final
         
