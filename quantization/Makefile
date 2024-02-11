@@ -5,7 +5,7 @@ LLAMAFILE_REPOSITORY_PATH=llamafile
 
 all: run-merge-models \
 	run-create-gguf-folders \
-     run-quantize-llama-model
+    run-quantize-llama-model
 
 run-merge-models:
 	python3 merge_model.py
