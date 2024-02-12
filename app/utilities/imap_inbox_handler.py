@@ -6,30 +6,31 @@ import polars as pl
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import torch.nn.functional as F
-import json
+import logging
 from rest_framework.response import Response
 from rest_framework import status, generics
+from utilities.config import MODEL_SPAM_FILTER, API_KEY_OPENAI, MODEL_TAGGING
 
 from openai import OpenAI
 import os
 
-CLIENT = OpenAI(api_key="sk-****")
-MODEL_NAME = "NotShrirang/albert-spam-filter"
+CLIENT = OpenAI(api_key= API_KEY_OPENAI)
+
 class ImapInboxHandler:
     def __init__(
             self, 
             user, 
             password, 
-            imap_url='imap.gmail.com'
+            imap_server
         ) -> None:
         self.user = user
         self.password = password
-        self.imap_url = imap_url
-        self.mail = IMAP4_SSL(imap_url)
+        self.imap_server = imap_server
+        self.mail = IMAP4_SSL(imap_server)
         self.mail.login(user, password)
         self.mail.select('Inbox')
-        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME,)
-        self.model = AutoModelForSequenceClassification.from_pretrained(MODEL_NAME, from_tf=True)
+        self.tokenizer = AutoTokenizer.from_pretrained(MODEL_SPAM_FILTER)
+        self.model = AutoModelForSequenceClassification.from_pretrained(MODEL_SPAM_FILTER, from_tf=True)
         self.mail.select(mailbox='Inbox', readonly=False)
         
 
@@ -81,7 +82,7 @@ class ImapInboxHandler:
     
     def create_df_unseen_emails(self, unseen_msgs): 
         """
-        This function creates a DataFrame of unseen emails.
+        This function creates a polars DataFrame of unseen emails.
         
         Args:
             unseen_msgs (list): List of unseen emails.
@@ -102,23 +103,24 @@ class ImapInboxHandler:
                             
                 df_unseen_emails = pl.DataFrame(data_list).select(pl.all())        
                 return df_unseen_emails
-        except json.JSONDecodeError as e:
+        except Exception as e:
+            logging.exception(f"Error creating DataFrame of unseen emails:")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)  
         
     
     def get_donot_reply_emails(self, unseen_msgs, words):
         """
-        This function marks emails with WORDS in the subject, sender or body as answered.
+        This function returns a list of ids of "do not reply emails".
         
         Args:
             unseen_msgs (list): List of unseen emails.
             WORDS (list): List of words.
 
         Returns:
-            not_answered_emails_ids (list): List of "do not answer emails".
+            donot_reply_mail_ids (list): List of "do not reply emails".
         """
         
-        not_answered_emails_ids = []
+        donot_reply_mail_ids = []
         data_list = []
         
         for msg in unseen_msgs:
@@ -131,9 +133,9 @@ class ImapInboxHandler:
             body_lower = email_data['Body'].lower()
 
             if any(word in sender_lower or word in body_lower or word in subject_lower for word in words):
-                not_answered_emails_ids.append(email_data['Id'])
+                donot_reply_mail_ids.append(email_data['Id'])
         
-        return not_answered_emails_ids
+        return donot_reply_mail_ids
             
                 
     def create_directories(self, new_directories):
@@ -162,7 +164,7 @@ class ImapInboxHandler:
             df_unseen_emails (pl.DataFrame): DataFrame of unseen emails.
         
         Returns:
-            clean_emails (list): List of clean emails
+            result_list (list): List of available emails to create a draft reply.
             
         """
         try:
@@ -215,11 +217,11 @@ class ImapInboxHandler:
                 result_dict = {'Id': id , 'Subject': subject, 'From': sender, 'Date': date, 'Body': body, 'Message-ID': message_id}
                 result_list.append(result_dict)
 
-            print('result_list: ',result_list)
+            logging.info('result_list: ',result_list)
 
             return result_list, df_final
         
-        except pl.exceptions.PolarsError as e:
+        except pl.exceptions.PolarsError as e:            
             return [], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
         except ValueError as e:
             return [], pl.DataFrame({'error_message': [f"Value Error: {e}"]})
@@ -244,7 +246,7 @@ class ImapInboxHandler:
                     self.mail.copy(df_final['Id'][i], 'Undefined')
                 else:
                     completion = CLIENT.chat.completions.create(
-                        model= "gpt-3.5-turbo",
+                        model= MODEL_TAGGING,
                         messages=[
                             {"role": "system", "content": "You're a classifier email bot."},
                             {"role": "user", "content": f"Classify the purpose of the following email as either  {', '.join(map(str, new_directories))} based on its content. Please provide a clear and concise categorization without explaining the reasons for your classification. I just need 1 word,  {', '.join(map(str, new_directories))}:\n\n{df_final[i]}"}
@@ -254,5 +256,5 @@ class ImapInboxHandler:
     
                     if chosen_label in new_directories:
                         self.mail.copy(df_final['Id'][i], chosen_label)
-                    else:
-                        print(f"Unhandled label: {chosen_label}")
+                    else:                        
+                        logging.error(f"Unhandled label: {chosen_label}")

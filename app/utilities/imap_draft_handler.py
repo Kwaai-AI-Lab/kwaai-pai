@@ -3,10 +3,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from utilities.config import EMAIL_CREDENTIALS
 import time
-import base64
-import ssl
 
+IMAP_LIST_COMMAND = '[Gmail]/Drafts'
 class ImapDraftHandler:
+    
     def __init__(
             self, 
             email_address=EMAIL_CREDENTIALS['email'], 
@@ -20,7 +20,7 @@ class ImapDraftHandler:
         self.mail.login(self.email_address, self.password)
 
     def select_drafts_mailbox(self):
-        self.mail.select('[Gmail]/Drafts')
+        self.mail.select(IMAP_LIST_COMMAND)
 
     def create_draft(self, id, to_address, subject, body):
         message = MIMEMultipart()
@@ -33,7 +33,7 @@ class ImapDraftHandler:
        
         message_bytes = message.as_bytes()
 
-        _, encoded_message = self.mail.append('[Gmail]/Drafts', '', imaplib.Time2Internaldate(time.time()), message_bytes)
+        _, encoded_message = self.mail.append(IMAP_LIST_COMMAND, '', imaplib.Time2Internaldate(time.time()), message_bytes)
         
         return encoded_message
     
