@@ -10,4 +10,4 @@ EMAIL_CREDENTIALS = {
 
 MODEL_SPAM_FILTER = "NotShrirang/albert-spam-filter"
 API_KEY_OPENAI = "sk-****"
-MODEL_TAGGING = "gpt-3.5-turbo",
+MODEL_TAGGING = "gpt-3.5-turbo"

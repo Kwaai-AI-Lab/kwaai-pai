@@ -1,6 +1,6 @@
 from celery import Celery, shared_task
 from utilities.create_email_draft import create_email_draft
-from app.utilities.get_unseen_emails import get_unseen_emails
+from utilities.get_unseen_emails import get_unseen_emails
 import logging
 
 celery = Celery('tasks', broker='redis://redis:6379/0')
@@ -17,7 +17,8 @@ def process_unseen_emails():
         for unseen_email in unseen_emails:
             
             llm_response = create_email_draft(
-                id = unseen_email['Message-ID'],
+                id = unseen_email['Id'],
+                mesage_id = unseen_email['Message-ID'],
                 to_address = unseen_email['From'],                
                 subject = 'Re: ' + unseen_email['Subject'],
                 prompt= "Write an email to the following message: " + unseen_email['Body']
