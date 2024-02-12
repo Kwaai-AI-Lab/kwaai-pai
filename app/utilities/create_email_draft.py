@@ -1,7 +1,7 @@
 """This module creates an email draft using the LLM response model"""
-from utilities.config import EMAIL_CREDENTIALS, MODEL_NAME
+from utilities.config import EMAIL_CREDENTIALS
 from utilities.imap_draft_handler import ImapDraftHandler
-from utilities.llm_response_generator import LLMResponseGenerator
+from utilities.llm_response import stream_response_and_concatenate
 
 def create_email_draft(
     to_address: str,
@@ -9,13 +9,12 @@ def create_email_draft(
     prompt: str,
 ) -> str:
     """Create an email draft using llm response model"""
-    llm = LLMResponseGenerator(model_path=MODEL_NAME)
     draft_manager = ImapDraftHandler(
         EMAIL_CREDENTIALS['email'],
         EMAIL_CREDENTIALS['password'],
     )
 
-    llm_response = llm.generate_response(prompt)
+    llm_response = stream_response_and_concatenate(prompt)
 
 
     draft_manager.login()

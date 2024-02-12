@@ -1,20 +1,27 @@
 import requests
 import json
 
-def stream_response_and_concatenate(url, payload):
+def stream_response_and_concatenate(prompt):
     """Stream the response of a POST request and concatenate the content."""
-    headers = {
+    DOCKER_SERVER_URL = "http://host.docker.internal:8080/completion"
+    HEADERS = {
         'Connection': 'keep-alive',
         'Content-Type': 'application/json',
         'Accept': 'text/event-stream',
     }
-
+    PAYLOAD = {
+            "stream": True, 
+            "n_predict": 500, 
+            "temperature": 0.2, 
+            "stop": ["</s>"],
+            "prompt": prompt,
+        }
     content_pieces = []
 
     response = requests.post(
-        url, 
-        data=json.dumps(payload), 
-        headers=headers, 
+        DOCKER_SERVER_URL, 
+        data=json.dumps(PAYLOAD), 
+        headers=HEADERS, 
         stream=True
     )
 
@@ -35,16 +42,3 @@ def stream_response_and_concatenate(url, payload):
 
     complete_content = "".join(content_pieces)
     return complete_content
-
-url = "http://localhost:8080/completion"
-payload = {
-    "stream": True,
-    "n_predict": 500,
-    "temperature": 0.2,
-    "stop": ["</s>"],
-    "prompt": "Write an email draft to scheule a meeting with John"
-}
-
-complete_content = stream_response_and_concatenate(url, payload)
-
-print(complete_content)
