@@ -22,18 +22,18 @@ class ImapDraftHandler:
     def select_drafts_mailbox(self):
         self.mail.select(IMAP_LIST_COMMAND)
 
-    def create_draft(self, id, to_address, subject, body):
+    def create_draft(self, id, message_id, to_address, subject, body):
         message = MIMEMultipart()
         message['From'] = self.email_address
         message['To'] = to_address
         message['Subject'] = subject
-        message['In-Reply-To'] = id
+        message['In-Reply-To'] = message_id
 
         message.attach(MIMEText(body, 'plain'))
        
-        message_bytes = message.as_bytes()
+        message_bytes = message.as_bytes()       
 
-        _, encoded_message = self.mail.append(IMAP_LIST_COMMAND, '', imaplib.Time2Internaldate(time.time()), message_bytes)
+        _, encoded_message = self.mail.append(IMAP_LIST_COMMAND, '', imaplib.Time2Internaldate(time.time()), message_bytes.decode('utf-8', 'ignore').encode('utf-8'))
         
         return encoded_message
     

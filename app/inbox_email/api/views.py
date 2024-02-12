@@ -2,7 +2,7 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 import logging
 
-from app.utilities.get_unseen_emails import get_unseen_emails
+from utilities.get_unseen_emails import get_unseen_emails
 
 
 class ImapInboxView(generics.GenericAPIView):
