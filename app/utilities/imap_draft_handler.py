@@ -11,10 +11,11 @@ class ImapDraftHandler:
             self, 
             email_address=EMAIL_CREDENTIALS['email'], 
             password=EMAIL_CREDENTIALS['password'],
+            imap_server=EMAIL_CREDENTIALS['imap_server']
         ):
         self.email_address = email_address
         self.password = password
-        self.mail = imaplib.IMAP4_SSL('imap.gmail.com')
+        self.mail = imaplib.IMAP4_SSL(imap_server)
 
     def login(self):
         self.mail.login(self.email_address, self.password)
@@ -22,7 +23,7 @@ class ImapDraftHandler:
     def select_drafts_mailbox(self):
         self.mail.select(IMAP_LIST_COMMAND)
 
-    def create_draft(self, id, message_id, to_address, subject, body):
+    def create_draft(self, message_id, to_address, subject, body):
         message = MIMEMultipart()
         message['From'] = self.email_address
         message['To'] = to_address
