@@ -2,8 +2,9 @@ from imaplib import IMAP4_SSL
 from email import message_from_bytes
 from email.utils import parsedate_to_datetime
 
-class ImapEmailHandler:
-    def __init__(self, user, password, imap_server='imap.gmail.com') -> None:
+
+class ImapEmailHandler:   
+    def __init__(self, user, password, imap_server) -> None:
         self.user = user
         self.password = password
         self.imap_server = imap_server
@@ -19,7 +20,7 @@ class ImapEmailHandler:
     def fetch_emails(self, mail_id_list):
         msgs = []
         for num in mail_id_list:
-            typ, data = self.mail.fetch(num, '(RFC822)')
+            _, data = self.mail.fetch(num, '(RFC822)')
             msgs.append(data)
         return msgs
     

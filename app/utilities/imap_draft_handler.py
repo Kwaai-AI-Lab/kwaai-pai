@@ -4,32 +4,37 @@ from email.mime.multipart import MIMEMultipart
 from utilities.config import EMAIL_CREDENTIALS
 import time
 
+IMAP_LIST_COMMAND = '[Gmail]/Drafts'
 class ImapDraftHandler:
+    
     def __init__(
             self, 
             email_address=EMAIL_CREDENTIALS['email'], 
             password=EMAIL_CREDENTIALS['password'],
+            imap_server=EMAIL_CREDENTIALS['imap_server']
         ):
         self.email_address = email_address
         self.password = password
-        self.mail = imaplib.IMAP4_SSL('imap.gmail.com')
+        self.mail = imaplib.IMAP4_SSL(imap_server)
 
     def login(self):
         self.mail.login(self.email_address, self.password)
 
     def select_drafts_mailbox(self):
-        self.mail.select('[Gmail]/Drafts')
+        self.mail.select(IMAP_LIST_COMMAND)
 
-    def create_draft(self, to_address, subject, body):
+    def create_draft(self, message_id, to_address, subject, body):
         message = MIMEMultipart()
         message['From'] = self.email_address
         message['To'] = to_address
         message['Subject'] = subject
+        message['In-Reply-To'] = message_id
+
         message.attach(MIMEText(body, 'plain'))
+       
+        message_bytes = message.as_bytes()       
 
-        message_bytes = message.as_bytes()
-
-        _, encoded_message = self.mail.append('[Gmail]/Drafts', '', imaplib.Time2Internaldate(time.time()), message_bytes)
+        _, encoded_message = self.mail.append(IMAP_LIST_COMMAND, '', imaplib.Time2Internaldate(time.time()), message_bytes.decode('utf-8', 'ignore').encode('utf-8'))
         
         return encoded_message
     

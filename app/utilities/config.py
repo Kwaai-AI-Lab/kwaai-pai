@@ -8,5 +8,6 @@ EMAIL_CREDENTIALS = {
     "imap_server": "imap.gmail.com",
 }
 
-DIRECTORIES = ['Personal', 'Professional', 'Education', 'Undefined']
-WORDS = ['no-reply', 'unsubscribe', 'noreply','-noreply','no_reply', 'not reply']
+MODEL_SPAM_FILTER = "NotShrirang/albert-spam-filter"
+API_KEY_OPENAI = "sk-****"
+MODEL_TAGGING = "gpt-3.5-turbo"
