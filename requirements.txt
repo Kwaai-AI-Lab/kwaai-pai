@@ -13,3 +13,4 @@ accelerate
 torch
 celery
 redis
+embedchain
