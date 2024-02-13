@@ -4,7 +4,7 @@ from email.utils import parsedate_to_datetime
 
 
 class ImapEmailHandler:   
-    def __init__(self, user, password, imap_server) -> None:
+    def __init__(self, user, password, imap_server='imap.gmail.com') -> None:
         self.user = user
         self.password = password
         self.imap_server = imap_server

@@ -21,7 +21,7 @@ class ImapInboxHandler:
             self, 
             user, 
             password, 
-            imap_server
+            imap_server = 'imap.gmail.com'
         ) -> None:
         self.user = user
         self.password = password
