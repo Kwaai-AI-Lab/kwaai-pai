@@ -31,4 +31,6 @@ urlpatterns = [
     path('api/llm/', include('llm.api.urls')),
     path('api/sentbox-email/', include('sentbox_email.api.urls')),
     path('api/inbox-email/', include('inbox_email.api.urls')),
+    path('api/rag-add/', include('rag_add.api.urls')),
+    path('api/rag-chat/', include('rag_chat.api.urls')),
 ]
