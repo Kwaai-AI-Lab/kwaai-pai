@@ -15,15 +15,13 @@ def process_unseen_emails():
             return
 
         for unseen_email in unseen_emails:
-            
             llm_response = create_email_draft(
                 message_id = unseen_email['Message-ID'],
                 to_address = unseen_email['From'],                
                 subject = 'Re: ' + unseen_email['Subject'],
-                prompt= "Write an email to the following message: " + unseen_email['Body']
+                prompt= 'Write an email to reply to the following message: ' + unseen_email['Body']
             )
         logging.info("llm_response: %s", llm_response)
-
     except Exception as e:
         logging.exception(f"Error processing unseen emails: {e}")
 

@@ -18,10 +18,9 @@ def create_email_draft(
 
     llm_response = stream_response_and_concatenate(prompt)
 
-
     draft_manager.login()
     draft_manager.select_drafts_mailbox()
-    llm_response = draft_manager.create_draft(message_id, to_address, subject, prompt)
+    llm_response = draft_manager.create_draft(message_id, to_address, subject, llm_response)
     draft_manager.logout()
 
     return llm_response
