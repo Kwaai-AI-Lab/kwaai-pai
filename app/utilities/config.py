@@ -1,4 +1,4 @@
-MODEL_NAME = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
 EMAILS_DATA_SET_PATH = './sent_box_emails.csv'
 KEYWORD = 'FROM'
 
