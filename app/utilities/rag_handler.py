@@ -49,4 +49,4 @@ class RAGHandler:
             return ({"detail": " An unexpected error occurred, " + str(e)}) 
         
     def add_source(self):        
-        self.rag_app.add('utilities/emails.csv')
+        self.rag_app.add('utilities/Inbox.csv')

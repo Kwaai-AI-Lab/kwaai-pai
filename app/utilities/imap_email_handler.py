@@ -1,6 +1,7 @@
 from imaplib import IMAP4_SSL
 from email import message_from_bytes
 from email.utils import parsedate_to_datetime
+import re
 
 
 class ImapEmailHandler:   
@@ -24,6 +25,14 @@ class ImapEmailHandler:
             msgs.append(data)
         return msgs
     
+    def preprocess_body(self, body: str) -> str:
+        body = re.sub(r'\S+@\S+', 'EMAIL', body)
+        body = re.sub(r'\d{10}', 'PHONE', body)
+        body = body.lower()
+        body = re.sub(r'\d', 'NUM', body)
+        body = re.sub(r'[^a-z0-9\s]', ' ', body)
+        return body
+    
     def process_emails(self, emails_data: list) -> list:
         processed_emails = []
 
@@ -38,6 +47,9 @@ class ImapEmailHandler:
             date = parsedate_to_datetime(date_str) if date_str else None
 
             body = self.extract_body(msg)
+            body = self.preprocess_body(body)
+
+            print("body", body)
 
             processed_email = {
                 'Subject': subject,

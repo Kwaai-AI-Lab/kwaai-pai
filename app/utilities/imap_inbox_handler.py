@@ -203,13 +203,25 @@ class ImapInboxHandler:
             df_final = df_final.join(df_no_reply, on='Id', how='left').fill_null(df_final['label_hf'])            
             df_final = df_final.drop(['text_right', 'label_hf'])
             df_final = df_final.rename({'label_hf_right': 'label'})
-            df_final = df_final.with_columns(df_final['Id'].cast(str)) 
+
+            print("df_final", df_final)
             
+            clean_ids = []
             clean_emails= []           
             for i in range(len(df_final)):
                 if df_final['label'][i] == 0:
                     clean_emails.append(df_final['text'][i])
-            
+                    clean_ids.append(df_final['Id'][i])
+                    
+            df_final_to_csv = df_unseen_emails.filter(pl.col('Id').is_in(clean_ids))
+            print("df_final_to_csv", df_final_to_csv)
+
+            df_final = df_final.with_columns(df_final['Id'].cast(str)) 
+
+            df_final_to_csv = df_final_to_csv.write_csv("utilities/Inbox.csv")
+
+            print("df_final_to_csv", df_final_to_csv)
+
             result_list = []
             for item in clean_emails:
                 parts = item.split("||")  

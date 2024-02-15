@@ -12,7 +12,7 @@ MODEL_SPAM_FILTER = "NotShrirang/albert-spam-filter"
 API_KEY_OPENAI = "sk-****"
 MODEL_TAGGING = "gpt-3.5-turbo"
 
-HUGGINGFACE_ACCESS_TOKEN = "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"
+HUGGINGFACE_ACCESS_TOKEN = "hf-***"
 MODEL_RAG = "utilities/mistral.yaml"
 RAG_SOURCE = "utilities/emails.csv"
 
