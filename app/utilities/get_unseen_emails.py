@@ -22,17 +22,11 @@ def get_unseen_emails() -> list:
         email_inbox_manager.create_directories(DIRECTORIES)
 
         unseen_mail_ids = email_manager.search_emails('UNSEEN')
-        print("unseen_mail_ids =======================",unseen_mail_ids)
         msgs_unformatted = email_manager.fetch_emails(unseen_mail_ids)
-        print("msgs_unformatted =======================",msgs_unformatted)
         donot_reply_mail_ids = email_inbox_manager.get_donot_reply_emails(msgs_unformatted, WORDS)
         df_unseen_emails = email_inbox_manager.create_df_unseen_emails(msgs_unformatted)
-
         result_list, df_final = email_inbox_manager.filter_unseen_emails(df_unseen_emails, donot_reply_mail_ids)
-        print("df_final =======================",df_final)
-        print("tags =======================")
         email_inbox_manager.tag_emails(df_final, DIRECTORIES)        
-        print("result_list =======================",result_list)
         return result_list
     
     except Exception as e:
