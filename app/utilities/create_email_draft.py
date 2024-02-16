@@ -16,12 +16,12 @@ def create_email_draft(
         EMAIL_CREDENTIALS['imap_server']
     )
 
-    llm_response = stream_response_and_concatenate(prompt)
+    # llm_response = stream_response_and_concatenate(prompt)
 
 
     draft_manager.login()
     draft_manager.select_drafts_mailbox()
-    draft_manager.create_draft(message_id, to_address, subject, llm_response)
+    llm_response =draft_manager.create_draft(message_id, to_address, subject, prompt)
     draft_manager.logout()
 
     return llm_response

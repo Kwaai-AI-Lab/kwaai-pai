@@ -1,7 +1,7 @@
 import os
 import logging
 import warnings
-from utilities.config import HUGGINGFACE_ACCESS_TOKEN, MODEL_RAG
+from utilities.config import HUGGINGFACE_ACCESS_TOKEN, RAG_SOURCE
 from embedchain import App
 
 
@@ -14,11 +14,7 @@ class RAGHandler:
         if cls._instance is None:
             cls._instance = super(RAGHandler, cls).__new__(cls)
             cls._instance._rag_app = App.from_config(model_config)
-        return cls._instance
-    
-    # def __init__(self, model_config) -> None:
-    #     if RAGHandler._rag_app is None:  
-    #         RAGHandler._rag_app = App.from_config(model_config)  
+        return cls._instance    
 
     @property
     def rag_app(self):
@@ -49,4 +45,4 @@ class RAGHandler:
             return ({"detail": " An unexpected error occurred, " + str(e)}) 
         
     def add_source(self):        
-        self.rag_app.add('utilities/Inbox.csv')
+        self.rag_app.add(RAG_SOURCE)

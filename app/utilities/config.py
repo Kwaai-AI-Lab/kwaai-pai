@@ -12,9 +12,9 @@ MODEL_SPAM_FILTER = "NotShrirang/albert-spam-filter"
 API_KEY_OPENAI = "sk-****"
 MODEL_TAGGING = "gpt-3.5-turbo"
 
-HUGGINGFACE_ACCESS_TOKEN = "hf-***"
+HUGGINGFACE_ACCESS_TOKEN = "hf_****"
 MODEL_RAG = "utilities/mistral.yaml"
-RAG_SOURCE = "utilities/emails.csv"
+RAG_SOURCE = "utilities/Inbox.csv"
 
 # App config using OpenAI gpt-3.5-turbo-1106 as LLM
 EC_APP_CONFIG = {
