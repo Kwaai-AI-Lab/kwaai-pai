@@ -126,10 +126,9 @@ venv.bak/
 dmypy.json
 
 # Pyre type
-/quantization/checkpoints/checkpoint-100/
-/quantization/executables/llava.llamafile
-/quantization/models
-/quantization/merged_adapters
-/quantization/llava.llamafile
-/quantization/llamafile
+/quantization/checkpoints
 /quantization/llama.cpp
+/quantization/llamafile
+/quantization/merged_adapters
+/quantization/models
+/quantization/llava.llamafile
