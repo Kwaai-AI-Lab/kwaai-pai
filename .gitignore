@@ -130,3 +130,6 @@ dmypy.json
 /quantization/executables/llava.llamafile
 /quantization/models
 /quantization/merged_adapters
+/quantization/llava.llamafile
+/quantization/llamafile
+/quantization/llama.cpp
