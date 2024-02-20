@@ -30,15 +30,7 @@ The script performs the following actions in order:
 
 ## Detailed Steps
 
-### Step 1: Install Python Dependencies
-
-```bash
-pip3 install -r requirements.local.txt
-```
-
-This command installs the Python packages required for the project, as specified in the `requirements.local.txt` file. Ensure you have `pip3` installed on your system.
-
-### Step 2: Create a tmux Session
+### Step 1: Create a tmux Session
 
 ```bash
 tmux new-session -d -s llava_session 'cd quantization/executables && ./llava.llamafile -m ../models/Publisher/Repository/model_tuned_q8_0.gguf'
