@@ -8,14 +8,14 @@
 
 ## Getting Started
 
-- [Prerequisites](/wiki/prerequisites)
-- [Installation and Configuration](/wiki/installation-configuration)
+- [Prerequisites](https://github.com/Kwaai-AI-Lab/kwaai-pai/blob/f76b8669ec0fdef60a1464e616cec0b86ccb21cf/docs/Prerequisites.md)
+- [Installation and Configuration](https://github.com/Kwaai-AI-Lab/kwaai-pai/blob/f76b8669ec0fdef60a1464e616cec0b86ccb21cf/docs/Installation.md)
 - [Running the Project](/wiki/running-project)
 
 ## Project Architecture
 
 - [Architecture Overview](/wiki/architecture-overview)
-- [Services Description](/wiki/services-description)
+- [Services Description](https://github.com/Kwaai-AI-Lab/kwaai-pai/blob/f76b8669ec0fdef60a1464e616cec0b86ccb21cf/docs/Services.md)
   - [App](/wiki/service-app)
   - [Database](/wiki/service-database)
   - [Cache and Message Queue](/wiki/service-cache-queue)
@@ -29,8 +29,8 @@
 
 ## Docker
 
-- [Dockerfile](/wiki/dockerfile)
-- [Docker Compose](/wiki/docker-compose)
+- [Dockerfile](https://github.com/Kwaai-AI-Lab/kwaai-pai/blob/f76b8669ec0fdef60a1464e616cec0b86ccb21cf/docs/Dockerfile-docs.md)
+- [Docker Compose](https://github.com/Kwaai-AI-Lab/kwaai-pai/blob/f76b8669ec0fdef60a1464e616cec0b86ccb21cf/docs/Services.md)
 - [Container Management](/wiki/container-management)
 
 ## CI/CD
