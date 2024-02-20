@@ -1,4 +1,4 @@
-# Setup Script Documentation
+# Prerequisites - Installation - Configuration.
 
 This document explains the setup script designed to prepare and start the project environment. The script automates the installation of Python dependencies, initializes a tmux session for running a specific task, and sets up Docker containers as defined in the project's `docker-compose.yml`.
 
@@ -6,56 +6,120 @@ This document explains the setup script designed to prepare and start the projec
 
 The script performs the following actions in order:
 
-1. Installs Python dependencies from the `requirements.local.txt` file.
-2. Creates a new detached tmux session named `llava_session`.
-3. Within this tmux session, changes the directory to `quantization/executables` and executes a file named `llava.llamafile` with specific parameters.
-4. Waits for 5 seconds to ensure the command has been executed properly.
-5. Executes `docker-compose up --build` to build and start the Docker containers as per the configuration in `docker-compose.yml`.
+1. Creates a new detached tmux session named `llava_session`.
+2. Within this tmux session, changes the directory to `quantization/` and executes a file named `llava.llamafile` with specific parameters.
+3. Waits for 5 seconds to ensure the command has been executed properly.
+4. Executes `docker-compose up --build` to build and start the Docker containers as per the configuration in `docker-compose.yml`.
 
-## How to Use the Script
 
-1. **Ensure the Script is Accessible**: Save the script in a file, for example, `setup.sh`, within the root directory of your project.
+# Dockerfile Documentation
 
-2. **Make the Script Executable**: Change the script's permissions to make it executable. Open a terminal and run:
+This Dockerfile creates a Docker image based on Python 3.9 with additional libraries and configurations suitable for running a Django application that utilizes Hugging Face transformers and TensorFlow. It is tailored for both development and production environments with an emphasis on AI and machine learning projects.
 
-   ```bash
-   chmod +x setup.sh
-   ```
+## Base Image
 
-3. **Run the Script**: Execute the script by running:
-
-   ```bash
-   ./setup.sh
-   ```
-
-## Detailed Steps
-
-### Step 1: Create a tmux Session
-
-```bash
-tmux new-session -d -s llava_session 'cd quantization/executables && ./llava.llamafile -m ../models/Publisher/Repository/model_tuned_q8_0.gguf'
+```Dockerfile
+FROM python:3.9-buster
 ```
+The image is based on Python 3.9 running on Debian Buster, providing a stable and well-supported environment for Python applications.
 
-A new tmux session named `llava_session` is created and detached. It navigates to the `quantization/executables` directory and executes the `llava.llamafile` with a model as its parameter.
+## Maintainer Label
 
-### Step 3: Wait for Execution
-
-```bash
-sleep 5
+```Dockerfile
+LABEL maintainer="Kwaai - AI Lab"
 ```
+Identifies the maintainer of the Dockerfile, useful for tracking ownership and responsibility within projects or organizations.
 
-The script pauses for 5 seconds to ensure the previous command has time to execute properly.
+## Environment Variables
 
-### Step 4: Docker Compose
-
-```bash
-docker-compose up --build
+```Dockerfile
+ENV PYTHONUNBUFFERED 1
+ENV HF_HOME /home/django-user/.cache/huggingface/hub
+ENV TRANSFORMERS_CACHE /home/django-user/.cache/huggingface/transformers
 ```
+- `PYTHONUNBUFFERED`: Ensures that Python output is sent straight to terminal (i.e., container logs) without being first buffered, which is useful for logging and debugging in Docker environments.
+- `HF_HOME` and `TRANSFORMERS_CACHE`: Set the cache directories for Hugging Face models and transformers, optimizing performance and reducing redundant downloads.
 
-Finally, Docker Compose is used to build and start all services defined in your `docker-compose.yml`, setting up your project's environment.
+## Copying Requirements
 
-## Troubleshooting
+```Dockerfile
+COPY ./requirements.txt /tmp/requirements.txt
+COPY ./requirements.dev.txt /tmp/requirements.dev.txt
+```
+Copies the production and development requirement files into the temporary directory of the container.
 
-- **Python Dependencies**: If the pip install command fails, ensure you have Python and pip correctly installed and that your `requirements.local.txt` file exists and is correctly formatted.
-- **tmux Session**: If the tmux session does not start as expected, verify that tmux is installed and that the paths and filenames in the command are correct.
-- **Docker Compose**: Should there be issues with Docker Compose, check that Docker is running on your system and that the `docker-compose.yml` file is correctly configured.
+## Application Directory Setup
+
+```Dockerfile
+COPY ./app /app
+WORKDIR /app
+COPY ./scripts /scripts
+EXPOSE 8000
+```
+- Copies the application code and scripts into the container.
+- Sets the working directory to `/app`.
+- Exposes port `8000` for the application.
+
+## Development Environment Argument
+
+```Dockerfile
+ARG DEV=true
+```
+Defines an argument `DEV` that determines whether the image is built for development (`true`) or production (`false`). This affects the installation of additional development dependencies.
+
+## System Dependencies Installation
+
+```Dockerfile
+RUN apt-get update && \
+    apt-get install -y libffi-dev libjpeg-dev libstdc++-8-dev libstdc++6 \
+                       build-essential libpq-dev zlib1g-dev postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+```
+Installs necessary system libraries and tools required for the application and its dependencies, including database and image processing libraries.
+
+## Python Environment Setup
+
+```Dockerfile
+RUN python -m venv /py && \
+    /py/bin/python -m ensurepip && \
+    /py/bin/pip install --upgrade pip
+```
+Creates a Python virtual environment in `/py`, ensuring pip is installed and up-to-date.
+
+## PyTorch and TensorFlow Installation
+
+```Dockerfile
+RUN /py/bin/pip install --no-cache-dir torch torchvision -f https://download.pytorch.org/whl/cu111/torch_stable.html
+RUN /py/bin/pip install --no-cache-dir tensorflow
+```
+Installs PyTorch, torchvision, and TensorFlow without using the cache to ensure the latest versions are installed. PyTorch installation is specifically targeted for CUDA 11.1 compatible systems.
+
+## Python Dependencies Installation
+
+```Dockerfile
+RUN /py/bin/pip install -r /tmp/requirements.txt && \
+    if [ "$DEV" = "true" ]; then /py/bin/pip install -r /tmp/requirements.dev.txt ; fi
+```
+Installs Python dependencies from `requirements.txt` for all environments and additionally from `requirements.dev.txt` if the build is for development.
+
+## User and Permissions Setup
+
+```Dockerfile
+RUN adduser --disabled-password --no-create-home django-user && \
+    mkdir -p /vol/web/media /vol/web/static /vol/temp && \
+    chown -R django-user:django-user /vol && \
+    chmod -R 755 /vol && \
+    chmod -R +x /scripts
+```
+Creates a non-root user `django-user` for running the application, sets up necessary volumes for media and static files, and adjusts permissions for runtime efficiency and security.
+
+## Final Environment Setup
+
+```Dockerfile
+ENV PATH="/scripts:/py/bin:$PATH"
+USER django-user
+CMD ["run.sh"]
+```
+- Updates the `PATH` environment variable to include the Python virtual environment and scripts directory.
+- Switches to the `django-user` to run the application.
+- Specifies the default command to run the application using `run.sh` script.
