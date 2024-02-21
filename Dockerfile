@@ -39,6 +39,9 @@ RUN mkdir -p /home/django-user/.cache/huggingface && \
 # Create and set permissions for .embedchain directory
 RUN mkdir -p /home/django-user/.embedchain && \
     chown -R django-user:django-user /home/django-user/.embedchain
+
+RUN mkdir -p /app/db && \
+    chown -R django-user:django-user /app/db
  
 ENV PATH="/scripts:/py/bin:$PATH"
  
