@@ -21,7 +21,7 @@ class ImapInboxHandler:
             self, 
             user, 
             password, 
-            imap_server
+            imap_server = 'imap.gmail.com'
         ) -> None:
         self.user = user
         self.password = password
@@ -205,11 +205,13 @@ class ImapInboxHandler:
             df_final = df_final.rename({'label_hf_right': 'label'})
             df_final = df_final.with_columns(df_final['Id'].cast(str)) 
             
+            clean_ids = []
             clean_emails= []           
             for i in range(len(df_final)):
                 if df_final['label'][i] == 0:
                     clean_emails.append(df_final['text'][i])
-            
+                    clean_ids.append(df_final['Id'][i])            
+
             result_list = []
             for item in clean_emails:
                 parts = item.split("||")  

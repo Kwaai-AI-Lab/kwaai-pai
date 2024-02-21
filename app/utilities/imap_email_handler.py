@@ -4,7 +4,7 @@ from email.utils import parsedate_to_datetime
 
 
 class ImapEmailHandler:   
-    def __init__(self, user, password, imap_server) -> None:
+    def __init__(self, user, password, imap_server='imap.gmail.com') -> None:
         self.user = user
         self.password = password
         self.imap_server = imap_server
@@ -22,7 +22,7 @@ class ImapEmailHandler:
         for num in mail_id_list:
             _, data = self.mail.fetch(num, '(RFC822)')
             msgs.append(data)
-        return msgs
+        return msgs    
     
     def process_emails(self, emails_data: list) -> list:
         processed_emails = []
@@ -38,6 +38,9 @@ class ImapEmailHandler:
             date = parsedate_to_datetime(date_str) if date_str else None
 
             body = self.extract_body(msg)
+            body = self.preprocess_body(body)
+
+            print("body", body)
 
             processed_email = {
                 'Subject': subject,
