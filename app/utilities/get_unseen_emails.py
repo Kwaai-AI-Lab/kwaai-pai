@@ -28,9 +28,10 @@ def get_unseen_emails() -> list:
         donot_reply_mail_ids = email_inbox_manager.get_donot_reply_emails(msgs_unformatted, WORDS)
         df_unseen_emails = email_inbox_manager.create_df_unseen_emails(msgs_unformatted)
 
-        result_list, df_final = email_inbox_manager.filter_unseen_emails(df_unseen_emails, donot_reply_mail_ids)
+        result_list, df_final, df_final_to_csv = email_inbox_manager.filter_unseen_emails(df_unseen_emails, donot_reply_mail_ids)
         print("df_final =======================",df_final)
         print("tags =======================")
+        email_inbox_manager.create_csv(df_final_to_csv)
         email_inbox_manager.tag_emails(df_final, DIRECTORIES)        
         print("result_list =======================",result_list)
         return result_list

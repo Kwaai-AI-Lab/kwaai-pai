@@ -10,6 +10,7 @@ import logging
 from rest_framework.response import Response
 from rest_framework import status, generics
 from utilities.config import MODEL_SPAM_FILTER, API_KEY_OPENAI, MODEL_TAGGING
+import pandas as pd
 
 from openai import OpenAI
 import os
@@ -153,6 +154,8 @@ class ImapInboxHandler:
         for new_directory in new_directories:
             if new_directory not in directories:
                 self.mail.create(new_directory)
+        for i in self.mail.list()[1]:
+            print(i)
 
 
     def filter_unseen_emails(self, df_unseen_emails, donot_answer_mail_ids): 
@@ -191,6 +194,8 @@ class ImapInboxHandler:
 
             df_final = pl.DataFrame({'text': X_test, 'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id'].cast(pl.Int64)})                      
             
+            print("df_final with hf tag", df_final)
+
             df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
             donot_answer_mail_ids = list(map(int, donot_answer_mail_ids))
             
@@ -214,13 +219,8 @@ class ImapInboxHandler:
                     clean_ids.append(df_final['Id'][i])
                     
             df_final_to_csv = df_unseen_emails.filter(pl.col('Id').is_in(clean_ids))
-            print("df_final_to_csv", df_final_to_csv)
 
             df_final = df_final.with_columns(df_final['Id'].cast(str)) 
-
-            df_final_to_csv = df_final_to_csv.write_csv("utilities/Inbox.csv")
-
-            print("df_final_to_csv", df_final_to_csv)
 
             result_list = []
             for item in clean_emails:
@@ -229,9 +229,7 @@ class ImapInboxHandler:
                 result_dict = {'Id': id , 'Subject': subject, 'From': sender, 'Date': date, 'Body': body, 'Message-ID': message_id}
                 result_list.append(result_dict)
 
-            logging.info('result_list: ',result_list)
-
-            return result_list, df_final
+            return result_list, df_final, df_final_to_csv
         
         except pl.exceptions.PolarsError as e:            
             return [], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
@@ -241,6 +239,20 @@ class ImapInboxHandler:
             return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
         except pl.exceptions.ColumnNotFoundError as e:
             return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
+        
+
+    def create_csv(self, df_final_to_csv):
+        """
+        This function creates a csv file of clean emails.
+        
+        Args:
+            df_final_to_csv (pl.DataFrame): DataFrame of clean emails.
+        """
+        try:
+            df_final_to_csv.write_csv('utilities/Inbox.csv')
+        except Exception as e:
+            logging.exception(f"Error creating CSV file of unseen emails:")
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
     def tag_emails(self, df_final, new_directories):
             """
@@ -261,7 +273,7 @@ class ImapInboxHandler:
                         model= MODEL_TAGGING,
                         messages=[
                             {"role": "system", "content": "You're a classifier email bot."},
-                            {"role": "user", "content": f"Classify the purpose of the following email as either  {', '.join(map(str, new_directories))} based on its content. Please provide a clear and concise categorization without explaining the reasons for your classification. I just need 1 word,  {', '.join(map(str, new_directories))}:\n\n{df_final[i]}"}
+                            {"role": "user", "content": f"Classify the purpose of the following email as either  {', '.join(map(str, new_directories))} based on its content. Please provide a clear and concise categorization without explaining the reasons for your classification, Be carefully with all the context of the email. I just need 1 word,  {', '.join(map(str, new_directories))}:\n\n{df_final[i]}"}
                         ]
                     )
                     chosen_label = completion.choices[0].message.content
