@@ -157,8 +157,33 @@ class ImapInboxHandler:
         for i in self.mail.list()[1]:
             print(i)
 
+    def filter_emails_by_domain(self, unseen_msgs, EMAIL_DOMAINS):
+        """
+        This function filters emails by domain.
 
-    def filter_unseen_emails(self, df_unseen_emails, donot_answer_mail_ids): 
+        Args:
+            unseen_msgs (list): List of unseen emails.
+
+        Returns:
+            reply_mail_ids (list): List of reply emails.
+        """
+        reply_mail_ids = []
+        data_list = []
+
+        for msg in unseen_msgs:
+            id, _, sender, _, _, _  = self.extract_email_info(msg)
+            data_list.append({'Id': id, 'Sender': sender})
+
+
+        for email_data in data_list:
+            sender_lower = email_data['Sender'].lower()
+            if any(domain in sender_lower for domain in EMAIL_DOMAINS):
+                reply_mail_ids.append(email_data['Id'])
+
+        return reply_mail_ids
+
+
+    def filter_unseen_emails(self, df_unseen_emails, donot_answer_mail_ids, reply_email_ids): 
         """
         This function rules out emails no-reply, 
         unsuscribe or potential spam, and keeps a list of clean emails.
@@ -198,16 +223,36 @@ class ImapInboxHandler:
 
             df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
             donot_answer_mail_ids = list(map(int, donot_answer_mail_ids))
-            
-            df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answer_mail_ids)) 
-            
-            df_no_reply = df_no_reply.with_columns(
-                df_no_reply['label_hf'].replace([0], [1])
+            reply_email_ids = list(map(int, reply_email_ids))
+
+            df_reply_emails = df_final.filter(pl.col('Id').is_in(reply_email_ids))
+
+            print("df_reply_emails", df_reply_emails)
+
+            df_reply_emails = df_reply_emails.with_columns(
+                df_reply_emails['label_hf'].replace([1], [0])
             )
-            
-            df_final = df_final.join(df_no_reply, on='Id', how='left').fill_null(df_final['label_hf'])            
+
+            print("df_reply_emails with hf tag changed", df_reply_emails)
+
+            df_final = df_final.join(df_reply_emails, on='Id', how='left').fill_null(df_final['label_hf'])
             df_final = df_final.drop(['text_right', 'label_hf'])
             df_final = df_final.rename({'label_hf_right': 'label'})
+
+            print("df_final with reply tag", df_final)
+
+            df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answer_mail_ids)) 
+
+            df_no_reply = df_no_reply.with_columns(
+                df_no_reply['label'].replace([0], [1])
+            )
+
+            df_final = df_final.join(df_no_reply, on='Id', how='left').fill_null(df_final['label'])            
+            df_final = df_final.drop(['text_right', 'label'])
+            df_final = df_final.rename({'label_right': 'label'})
+
+            print("df_final with no reply tag", df_final)
+
 
             print("df_final", df_final)
             
@@ -232,14 +277,11 @@ class ImapInboxHandler:
             return result_list, df_final, df_final_to_csv
         
         except pl.exceptions.PolarsError as e:            
-            return [], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
+            return [],[], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
         except ValueError as e:
-            return [], pl.DataFrame({'error_message': [f"Value Error: {e}"]})
+            return [],[], pl.DataFrame({'error_message': [f"Value Error: {e}"]})
         except Exception as e:
-            return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
-        except pl.exceptions.ColumnNotFoundError as e:
-            return [], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
-        
+            return [],[], pl.DataFrame({'error_message': [f"Unexpected Error: {e}"]})
 
     def create_csv(self, df_final_to_csv):
         """

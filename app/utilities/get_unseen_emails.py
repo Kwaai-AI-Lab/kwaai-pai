@@ -5,6 +5,7 @@ import logging
 
 DIRECTORIES = ['Personal', 'Professional', 'Education', 'Undefined']
 WORDS = ['no-reply', 'unsubscribe', 'noreply','-noreply','no_reply', 'not reply']
+EMAIL_DOMAINS =['@gmail.com', '@yahoo.com', '@hotmail.com', '@outlook.com']
 
 def get_unseen_emails() -> list:
     """This function checks for unseen emails, filters them
@@ -26,9 +27,10 @@ def get_unseen_emails() -> list:
         msgs_unformatted = email_manager.fetch_emails(unseen_mail_ids)
         print("msgs_unformatted =======================",msgs_unformatted)
         donot_reply_mail_ids = email_inbox_manager.get_donot_reply_emails(msgs_unformatted, WORDS)
+        reply_email_ids = email_inbox_manager.filter_emails_by_domain(msgs_unformatted, EMAIL_DOMAINS)
         df_unseen_emails = email_inbox_manager.create_df_unseen_emails(msgs_unformatted)
 
-        result_list, df_final, df_final_to_csv = email_inbox_manager.filter_unseen_emails(df_unseen_emails, donot_reply_mail_ids)
+        result_list, df_final, df_final_to_csv = email_inbox_manager.filter_unseen_emails(df_unseen_emails, donot_reply_mail_ids, reply_email_ids)
         print("df_final =======================",df_final)
         print("tags =======================")
         email_inbox_manager.create_csv(df_final_to_csv)
