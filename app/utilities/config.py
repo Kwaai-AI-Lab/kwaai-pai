@@ -17,7 +17,7 @@ EMAIL_CREDENTIALS = {
     "imap_server": os.environ.get("IMAP_HOST"),
 }
 
-API_KEY_OPENAI = os.environ.get("OPENAI_API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 EC_APP_CONFIG = {
     "app": {
