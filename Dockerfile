@@ -36,6 +36,9 @@ RUN mkdir -p /home/django-user/.cache/huggingface && \
 RUN mkdir -p /home/django-user/.embedchain && \
     chown -R django-user:django-user /home/django-user/.embedchain
 
+RUN mkdir -p /var/run/postgresql && \
+    chown -R django-user:django-user /var/run/postgresql
+
 RUN mkdir -p /app/utilities && \
     chown -R django-user:django-user /app/utilities
  

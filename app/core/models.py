@@ -30,3 +30,15 @@ class LLMResponse(models.Model):
 
     def __str__(self):
         return self.response
+    
+class InboxEmail(models.Model):
+    """Inbox Email model."""
+    id = models.CharField(max_length=255, primary_key=True)
+    subject = models.CharField(max_length=255)
+    sender = models.CharField(max_length=255)
+    date = models.CharField(max_length=255)
+    body = models.TextField()
+    message_id = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.id

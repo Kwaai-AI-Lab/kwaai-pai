@@ -3,7 +3,7 @@ from rest_framework.response import Response
 import logging
 from utilities.add_rag_source import add_rag_source
 from utilities.config import RAG_SOURCE
-
+import os
 
 
 #from utilities.get_unseen_emails import get_unseen_emails

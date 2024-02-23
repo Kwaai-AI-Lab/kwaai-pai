@@ -18,7 +18,7 @@ def process_unseen_emails():
             return
             
         else:
-            add_rag_source()
+            #add_rag_source()
             for unseen_email in unseen_emails:
                 rag_response_context = get_rag_response("Give me the context of this email, I need to answer it: " + unseen_email['Body'])                
                 llm_response = create_email_draft(
@@ -30,6 +30,7 @@ def process_unseen_emails():
                                              + " \n\n" + "using this context: " + rag_response_context + "please do not include the Subject line in the response")
                 )
             logging.info("llm_response: %s", llm_response)
+           
 
     except Exception as e:
         logging.exception(f"Error processing unseen emails: {e}")

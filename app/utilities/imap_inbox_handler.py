@@ -10,7 +10,7 @@ import logging
 from rest_framework.response import Response
 from rest_framework import status, generics
 from utilities.config import MODEL_SPAM_FILTER, API_KEY_OPENAI, MODEL_TAGGING
-import pandas as pd
+from core.models import InboxEmail
 
 from openai import OpenAI
 import os
@@ -154,8 +154,8 @@ class ImapInboxHandler:
         for new_directory in new_directories:
             if new_directory not in directories:
                 self.mail.create(new_directory)
-        for i in self.mail.list()[1]:
-            print(i)
+        # for i in self.mail.list()[1]:
+        #     print(i)
 
     def filter_emails_by_domain(self, unseen_msgs, EMAIL_DOMAINS):
         """
@@ -227,7 +227,6 @@ class ImapInboxHandler:
 
             df_reply_emails = df_final.filter(pl.col('Id').is_in(reply_email_ids))
 
-            print("df_reply_emails", df_reply_emails)
 
             df_reply_emails = df_reply_emails.with_columns(
                 df_reply_emails['label_hf'].replace([1], [0])
@@ -324,3 +323,24 @@ class ImapInboxHandler:
                         self.mail.copy(df_final['Id'][i], chosen_label)
                     else:                        
                         logging.error(f"Unhandled label: {chosen_label}")
+
+    def create_inbox_db(self, df_final_to_csv):
+        """
+        This function creates a database of unseen emails.
+        
+        Args:
+            df_final (pl.DataFrame): DataFrame of unseen emails.
+        """
+        try:
+            for msg in range(len(df_final_to_csv)):
+                InboxEmail.objects.create(
+                    id = df_final_to_csv['Id'][msg],
+                    subject = df_final_to_csv['Subject'][msg],
+                    sender = df_final_to_csv['Sender'][msg],
+                    date = df_final_to_csv['Date'][msg],
+                    body = df_final_to_csv['Body'][msg],
+                    message_id = df_final_to_csv['Message-ID'][msg]
+                )
+        except Exception as e:
+            logging.exception(f"Error creating database of unseen emails:")
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
