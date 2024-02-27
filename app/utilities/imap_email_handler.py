@@ -23,7 +23,7 @@ class ImapEmailHandler:
         for num in mail_id_list:
             _, data = self.mail.fetch(num, '(RFC822)')
             msgs.append(data)
-        return msgs
+        return msgs    
     
     def preprocess_body(self, body: str) -> str:
         body = re.sub(r'\S+@\S+', 'EMAIL', body)

@@ -41,4 +41,3 @@ def get_unseen_emails() -> list:
     except Exception as e:
         logging.exception("Unexpected error occurred when checking unseen emails.")
         return ({"detail": " An unexpected error occurred, " + str(e)}) 
-        
