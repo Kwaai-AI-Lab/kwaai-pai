@@ -32,5 +32,3 @@ EC_APP_CONFIG = {
         }
     }
 }
-
-

@@ -4,6 +4,7 @@ drf-spectacular>=0.22.1,<0.23
 uwsgi>=2.0.20,<2.1
 psycopg2>=2.9.3,<2.10
 django-cors-headers
+polars
 transformers
 pandas
 pyarrow
@@ -17,4 +18,3 @@ chromadb==0.4.14
 streamlit===1.28.1
 sentence-transformers
 pysqlite3-binary
-polars-lts-cpu

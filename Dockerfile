@@ -19,9 +19,6 @@ RUN python -m venv /py && \
     /py/bin/python -m ensurepip && \
     /py/bin/pip install --upgrade pip
  
-RUN /py/bin/pip install -r /tmp/requirements.txt && \
-    if [ "$DEV" = "true" ]; then /py/bin/pip install -r /tmp/requirements.dev.txt ; fi
- 
 RUN rm -rf /tmp
  
 RUN adduser --disabled-password --no-create-home django-user && \
@@ -36,13 +33,15 @@ RUN /py/bin/pip install --upgrade pip && \
 RUN mkdir -p /home/django-user/.cache/huggingface && \
     chown -R django-user:django-user /home/django-user/.cache/huggingface
 
-# Create and set permissions for .embedchain directory
 RUN mkdir -p /home/django-user/.embedchain && \
     chown -R django-user:django-user /home/django-user/.embedchain
 
+RUN mkdir -p /app/utilities && \
+    chown -R django-user:django-user /app/utilities
+ 
 RUN mkdir -p /app/db && \
     chown -R django-user:django-user /app/db
- 
+
 ENV PATH="/scripts:/py/bin:$PATH"
  
 USER django-user

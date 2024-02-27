@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from utilities.config import EMAIL_CREDENTIALS
 import time
 
-IMAP_LIST_COMMAND = '[Gmail]/Drafts'
+IMAP_LIST_COMMAND = "[Gmail]/Drafts"
 class ImapDraftHandler:
     
     def __init__(
