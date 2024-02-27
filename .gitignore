@@ -127,6 +127,8 @@ dmypy.json
 
 # Pyre type
 /quantization/checkpoints/checkpoint-100/
-/quantization/executables/llava.llamafile
+/quantization/llava.llamafile
 /quantization/models
 /quantization/merged_adapters
+/quantization/llama.cpp
+/quantization/llamafile

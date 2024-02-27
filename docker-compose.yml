@@ -16,12 +16,17 @@ services:
                    python manage.py migrate &&
                    python manage.py runserver 0.0.0.0:8000"
         environment:
-            - DB_HOST=db
-            - DB_NAME=devdb
-            - DB_USER=devuser
-            - DB_PASS=changeme
-            - DEBUG=1
+            - DB_HOST=${DB_HOST}
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - DEBUG=${DEBUG}
+            
+            - IMAP_HOST=${IMAP_HOST}
+            - IMAP_EMAIL=${IMAP_EMAIL}
+            - IMAP_PASSWORD=${IMAP_PASSWORD}
 
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
         depends_on:
             - db
             - redis
@@ -32,9 +37,9 @@ services:
         volumes:
             - dev-db-data:/var/lib/postgresql/data
         environment:
-            - POSTGRES_DB=devdb
-            - POSTGRES_USER=devuser
-            - POSTGRES_PASSWORD=changeme
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 
     redis:
         image: "redis:latest"
@@ -58,8 +63,9 @@ services:
             - redis
             - celery
         environment:
-            - CELERYBEAT_CHDIR=/app/job
+            - CELERYBEAT_CHDIR=${CELERYBEAT_CHDIR}
 
 volumes:
     dev-db-data:
     dev-static-data:
+    celerybeat-data:
