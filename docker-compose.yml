@@ -28,6 +28,7 @@ services:
             - IMAP_PASSWORD=${IMAP_PASSWORD}
 
             - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
         depends_on:
             - db
             - redis

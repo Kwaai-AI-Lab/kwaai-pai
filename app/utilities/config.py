@@ -4,7 +4,7 @@ MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
 MODEL_SPAM_FILTER = "NotShrirang/albert-spam-filter"
 MODEL_TAGGING = "gpt-3.5-turbo"
 
-HUGGINGFACE_ACCESS_TOKEN = "hf_****"
+HUGGINGFACE_ACCESS_TOKEN = os.environ.get("HUGGINGFACE_ACCESS_TOKEN")
 MODEL_RAG = "utilities/mistral.yaml"
 RAG_SOURCE = "utilities/Inbox.csv"
 
