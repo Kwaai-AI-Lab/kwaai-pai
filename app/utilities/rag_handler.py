@@ -1,9 +1,10 @@
 import os
 import logging
 import warnings
-from utilities.config import HUGGINGFACE_ACCESS_TOKEN, MODEL_RAG
+from utilities.config import HUGGINGFACE_ACCESS_TOKEN
 from embedchain import App
-
+from app.settings import INBOX_DB_CONFIG
+# from embedchain.loaders.postgres import PostgresLoader
 
 os.environ["HUGGINGFACE_ACCESS_TOKEN"] = HUGGINGFACE_ACCESS_TOKEN
 
@@ -16,37 +17,31 @@ class RAGHandler:
             cls._instance._rag_app = App.from_config(model_config)
         return cls._instance
     
-    # def __init__(self, model_config) -> None:
-    #     if RAGHandler._rag_app is None:  
-    #         RAGHandler._rag_app = App.from_config(model_config)  
+    
 
     @property
     def rag_app(self):
         return self._rag_app
 
     
-    def get_rag_response(self,question) -> str:
-        """
-        Function to execute a query and log the response.
-
-        Args:
-            question (str): The query to be executed.
-
-        Returns:
-            str: The response from the query execution.
-        """
+    def get_rag_response(self,question) -> str:        
         try:
             logging.info(f"Executing query: {question}")
-
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=FutureWarning)
                 response = self.rag_app.query(question)
                 logging.info(f"Response: {response} \n")
-
                 return response
         except Exception as e:
-            logging.exception("Unexpected error occurred when checking unseen emails.")
+            logging.exception("Unexpected error occurred when generating rag response.")
             return ({"detail": " An unexpected error occurred, " + str(e)}) 
         
-    def add_source(self):        
-        self.rag_app.add('utilities/Inbox.csv')
+        
+    def add_source_csv(self, path):
+        self.rag_app.add(path, data_type='csv')
+
+    # def add_source_postgres(self):         
+    #     postgres_loader = PostgresLoader(config=INBOX_DB_CONFIG)
+    #     self.rag_app.add("SELECT * FROM core_inboxemail;", data_type='postgres', loader=postgres_loader)
+
+       

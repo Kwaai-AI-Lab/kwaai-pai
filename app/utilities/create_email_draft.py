@@ -21,7 +21,7 @@ def create_email_draft(
 
     draft_manager.login()
     draft_manager.select_drafts_mailbox()
-    draft_manager.create_draft(message_id, to_address, subject, prompt)
+    response = draft_manager.create_draft(message_id, to_address, subject, prompt)
     draft_manager.logout()
 
-    return prompt
+    return response

@@ -1,3 +1,5 @@
+
+from datetime import datetime
 from imaplib import IMAP4_SSL
 
 from email import message_from_bytes
@@ -263,6 +265,7 @@ class ImapInboxHandler:
                     clean_ids.append(df_final['Id'][i])
                     
             df_final_to_csv = df_unseen_emails.filter(pl.col('Id').is_in(clean_ids))
+            print("df_final_to_csv $$$$$$$$$$$$$$$$$$$$", df_final_to_csv)
 
             df_final = df_final.with_columns(df_final['Id'].cast(str)) 
 
@@ -284,13 +287,16 @@ class ImapInboxHandler:
 
     def create_csv(self, df_final_to_csv):
         """
-        This function creates a csv file of clean emails.
-        
+        This function creates a csv file of clean emails.        
         Args:
             df_final_to_csv (pl.DataFrame): DataFrame of clean emails.
         """
-        try:
-            df_final_to_csv.write_csv('utilities/Inbox.csv')
+        try: 
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            print("timestamp:::::::::::::::::", timestamp)            
+            if df_final_to_csv.shape[0] > 0:          
+                df_final_to_csv.write_csv('utilities/inbox_' + timestamp + '.csv')
+
         except Exception as e:
             logging.exception(f"Error creating CSV file of unseen emails:")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

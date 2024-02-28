@@ -20,7 +20,7 @@ services:
             - DB_NAME=devdb
             - DB_USER=devuser
             - DB_PASS=changeme
-            - DEBUG=1
+            - DB_PORT=5432
 
         depends_on:
             - db
