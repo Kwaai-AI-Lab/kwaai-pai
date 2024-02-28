@@ -61,6 +61,8 @@ By adhering to these guidelines, you ensure that the `run-merge-models` target c
 
 Quantizes the merged LLaMA model to a specific format (`q8_0`), optimizing it for performance on certain hardware. This step involves changing to the `llama.cpp` directory and executing the conversion script with the appropriate parameters.
 
+![Screenshot 2024-02-27 at 10 21 41 p m](https://github.com/Kwaai-AI-Lab/kwaai-pai/assets/144957509/1d2b7602-5eeb-4053-bbfd-2e6e50c2f8ef)
+
 ## Execution
 
 To run the entire process, simply execute the `make` command without any arguments. This will trigger the `all` target, which in turn calls the other targets in the specified order.
