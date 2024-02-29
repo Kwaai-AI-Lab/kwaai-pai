@@ -8,7 +8,6 @@ from utilities.get_unseen_emails import get_unseen_emails
 class ImapInboxView(generics.GenericAPIView):
     """   
         Handle POST requests to retrieve unseen emails from the Inbox.
-
         Returns:
             Response: JSON response containing a list of dictionaries 
             representing the unseen emails with the keys of:

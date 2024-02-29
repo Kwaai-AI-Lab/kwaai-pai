@@ -15,7 +15,6 @@ from utilities.config import MODEL_SPAM_FILTER, API_KEY_OPENAI, MODEL_TAGGING
 from core.models import InboxEmail
 
 from openai import OpenAI
-import os
 
 CLIENT = OpenAI(api_key= API_KEY_OPENAI)
 
@@ -39,11 +38,9 @@ class ImapInboxHandler:
 
     def extract_email_info(self, msg_data):
         """
-        This function extracts the email information from the email message.
-        
+        This function extracts the email information from the email message.        
         Args:
-            msg_data (tuple): Tuple of email message data.
-            
+            msg_data (tuple): Tuple of email message data.            
         Returns:
             id (str): Email message id.
             subject (str): Email message subject.
@@ -85,18 +82,16 @@ class ImapInboxHandler:
     
     def create_df_unseen_emails(self, unseen_msgs): 
         """
-        This function creates a polars DataFrame of unseen emails.
-        
+        This function creates a polars DataFrame of unseen emails.        
         Args:
-            unseen_msgs (list): List of unseen emails.
-            
+            unseen_msgs (list): List of unseen emails.            
         Returns:
             df_unseen_emails (pl.DataFrame): DataFrame of unseen emails.
         """       
         data_list = []
         try:
             if not unseen_msgs:
-                print("No unseen emails")
+                logging.info("No unseen emails")
                 df_unseen_emails = pl.DataFrame()
                 return  df_unseen_emails 
             else:
@@ -113,16 +108,13 @@ class ImapInboxHandler:
     
     def get_donot_reply_emails(self, unseen_msgs, words):
         """
-        This function returns a list of ids of "do not reply emails".
-        
+        This function returns a list of ids of "do not reply emails".        
         Args:
             unseen_msgs (list): List of unseen emails.
             WORDS (list): List of words.
-
         Returns:
             donot_reply_mail_ids (list): List of "do not reply emails".
-        """
-        
+        """       
         donot_reply_mail_ids = []
         data_list = []
         
@@ -144,11 +136,9 @@ class ImapInboxHandler:
     def create_directories(self, new_directories):
         """
         This function extract a list of directories.
-        If some directory does'nt exist, it will be created.
-        
+        If some directory does'nt exist, it will be created.        
         Args:
             new_directories (list): List of new directories.
-       
         """
         directories=[]
         for directory in self.mail.list()[1]:
@@ -156,19 +146,16 @@ class ImapInboxHandler:
         for new_directory in new_directories:
             if new_directory not in directories:
                 self.mail.create(new_directory)
-        # for i in self.mail.list()[1]:
-        #     print(i)
+        
 
     def filter_emails_by_domain(self, unseen_msgs, EMAIL_DOMAINS):
         """
         This function filters emails by domain.
-
         Args:
             unseen_msgs (list): List of unseen emails.
-
         Returns:
             reply_mail_ids (list): List of reply emails.
-        """
+        """        
         reply_mail_ids = []
         data_list = []
 
@@ -183,19 +170,16 @@ class ImapInboxHandler:
                 reply_mail_ids.append(email_data['Id'])
 
         return reply_mail_ids
-
+    
 
     def filter_unseen_emails(self, df_unseen_emails, donot_answer_mail_ids, reply_email_ids): 
         """
         This function rules out emails no-reply, 
-        unsuscribe or potential spam, and keeps a list of clean emails.
-        
+        unsuscribe or potential spam, and keeps a list of clean emails.        
         Args:
-            df_unseen_emails (pl.DataFrame): DataFrame of unseen emails.
-        
+            df_unseen_emails (pl.DataFrame): DataFrame of unseen emails.        
         Returns:
             result_list (list): List of available emails to create a draft reply.
-            
         """
         try:
             df_unseen_emails = df_unseen_emails.with_columns(
@@ -221,7 +205,7 @@ class ImapInboxHandler:
 
             df_final = pl.DataFrame({'text': X_test, 'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id'].cast(pl.Int64)})                      
             
-            print("df_final with hf tag", df_final)
+            logging.info("df_final with hf tag", df_final)
 
             df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
             donot_answer_mail_ids = list(map(int, donot_answer_mail_ids))
@@ -234,13 +218,13 @@ class ImapInboxHandler:
                 df_reply_emails['label_hf'].replace([1], [0])
             )
 
-            print("df_reply_emails with hf tag changed", df_reply_emails)
+            logging.info("df_reply_emails with hf tag changed", df_reply_emails)
 
             df_final = df_final.join(df_reply_emails, on='Id', how='left').fill_null(df_final['label_hf'])
             df_final = df_final.drop(['text_right', 'label_hf'])
             df_final = df_final.rename({'label_hf_right': 'label'})
 
-            print("df_final with reply tag", df_final)
+            logging.info("df_final with reply tag", df_final)
 
             df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answer_mail_ids)) 
 
@@ -252,10 +236,7 @@ class ImapInboxHandler:
             df_final = df_final.drop(['text_right', 'label'])
             df_final = df_final.rename({'label_right': 'label'})
 
-            print("df_final with no reply tag", df_final)
-
-
-            print("df_final", df_final)
+            logging.info("df_final", df_final)
             
             clean_ids = []
             clean_emails= []           
@@ -265,7 +246,7 @@ class ImapInboxHandler:
                     clean_ids.append(df_final['Id'][i])
                     
             df_final_to_csv = df_unseen_emails.filter(pl.col('Id').is_in(clean_ids))
-            print("df_final_to_csv $$$$$$$$$$$$$$$$$$$$", df_final_to_csv)
+            logging.info("df_final_to_csv:", df_final_to_csv)
 
             df_final = df_final.with_columns(df_final['Id'].cast(str)) 
 
@@ -293,13 +274,13 @@ class ImapInboxHandler:
         """
         try: 
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            print("timestamp:::::::::::::::::", timestamp)            
             if df_final_to_csv.shape[0] > 0:          
                 df_final_to_csv.write_csv('utilities/inbox_' + timestamp + '.csv')
 
         except Exception as e:
             logging.exception(f"Error creating CSV file of unseen emails:")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
         
     def tag_emails(self, df_final, new_directories):
             """

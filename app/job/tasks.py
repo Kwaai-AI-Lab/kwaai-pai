@@ -22,7 +22,7 @@ def process_unseen_emails():
         else:                      
             path = 'utilities/'             
             csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]                         
-            print("csv_files::::::", csv_files)
+            logging.info("csv_files list:", csv_files)
             if len(csv_files) > 0:            
                 add_rag_source(path + csv_files[-1])                      
             for unseen_email in unseen_emails:
