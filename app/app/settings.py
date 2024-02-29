@@ -175,6 +175,6 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
     'process_new_emails': {
         'task': 'job.tasks.process_unseen_emails',
-        'schedule': crontab(minute='*/10'),
+        'schedule': crontab(minute='*/1'),
     },
 }
