@@ -11,16 +11,20 @@ services:
         volumes:
             - ./app:/app
             - dev-static-data:/vol/web
+            - /app/utilities/credentials.json:/secrets/google:ro
+            
         command: >
             sh -c "python manage.py wait_for_db &&
                    python manage.py migrate &&
                    python manage.py runserver 0.0.0.0:8000"
+        
         environment:
             - DB_HOST=db
             - DB_NAME=devdb
             - DB_USER=devuser
             - DB_PASS=changeme
             - DB_PORT=5432
+            - GOOGLE_APPLICATION_CREDENTIALS=/secrets/google/credentials.json
 
         depends_on:
             - db
@@ -59,6 +63,13 @@ services:
             - celery
         environment:
             - CELERYBEAT_CHDIR=/app/job
+    chrome:
+        image: selenium/standalone-chrome:latest
+        volumes:
+            - /dev/shm:/dev/shm
+        ports:
+            - "4444:4444"
+        command: "sh -c 'google-chrome-stable --no-sandbox --disable-gpu --headless'"
 
 volumes:
     dev-db-data:
