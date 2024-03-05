@@ -9,7 +9,7 @@ EMAIL_CREDENTIALS = {
 }
 
 MODEL_SPAM_FILTER = "NotShrirang/albert-spam-filter"
-API_KEY_OPENAI = "sk-****"
+OPENAI_API_KEY = "sk-****"
 MODEL_TAGGING = "gpt-3.5-turbo"
 
 HUGGINGFACE_ACCESS_TOKEN = "hf-***"

@@ -11,12 +11,12 @@ import torch.nn.functional as F
 import logging
 from rest_framework.response import Response
 from rest_framework import status, generics
-from utilities.config import MODEL_SPAM_FILTER, API_KEY_OPENAI, MODEL_TAGGING
+from utilities.config import MODEL_SPAM_FILTER, OPENAI_API_KEY, MODEL_TAGGING
 from core.models import InboxEmail
 
 from openai import OpenAI
 
-CLIENT = OpenAI(api_key= API_KEY_OPENAI)
+CLIENT = OpenAI(api_key= OPENAI_API_KEY)
 
 class ImapInboxHandler:
     def __init__(
