@@ -4,44 +4,29 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-# from selenium import webdriver
-# from selenium.webdriver.chrome.service import Service
-# from selenium.webdriver.chrome.options import Options
-# from webdriver_manager.chrome import ChromeDriverManager
+import logging
 
 
-# driver = webdriver.Chrome(ChromeDriverManager().install())
-# If modifying these scopes, delete the file token.json.
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
-chrome = os.path.join(os.getcwd(), "chromedriver")
+
 def check_calendar_events():
-# def main():
+
   """Shows basic usage of the Drive v3 API.
   Prints the names and ids of the first 10 files the user has access to.
   """
   creds = None
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
+  
+  if os.path.exists("utilities/token.json"):
+    creds = Credentials.from_authorized_user_file("utilities/token.json", SCOPES)
   if not creds or not creds.valid:
-    print("No valid creds ============")
-    if creds and creds.expired and creds.refresh_token:
-      print("Exp creds+++++++++++++++")
+    logging.info("No valid credentials.")
+    
+    if creds and creds.expired and creds.refresh_token:      
       creds.refresh(Request())
     else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          "utilities/credentials.json", SCOPES
-      )
-      print("creds before::::::::::::::::::",creds)
+      flow = InstalledAppFlow.from_client_secrets_file("utilities/credentials.json", SCOPES)      
+      creds = flow.run_local_server() 
       
-      creds = flow.run_local_server(bind_addr="0.0.0.0",open_browser=False,port=10000,browser='chrome')
-                                    
-      
-      print("creds::::::::::::::::::",creds)
-    # Save the credentials for the next run
     with open("token.json", "w") as token:
       token.write(creds.to_json())
 
@@ -50,7 +35,7 @@ def check_calendar_events():
 
     # Call the Calendar API
     now = datetime.datetime.utcnow().isoformat() + "Z"  # 'Z' indicates UTC time
-    print("Getting the upcoming 10 events")
+    logging.info("Getting the upcoming 10 events")
     events_result = (
         service.events()
         .list(
@@ -63,25 +48,33 @@ def check_calendar_events():
         .execute()
     )
     events = events_result.get("items", [])
-    print(events)
+    logging.info(events)
+    
     if not events:
-      print("No upcoming events found.")
+      logging.info("No upcoming events found.")
       return
 
-    # Prints the start and name of the next 10 events
-    
+    events_list = []
     for event in events:
-      start = event["start"].get("dateTime", event["start"].get("date"))
-      end = event["end"].get("dateTime", event["end"].get("date"))
-      print(start, event["summary"])
-      #print(end, type(end))
-    return start, end, event["summary"]
+      start = event["start"].get("dateTime")
+      start_object = datetime.datetime.fromisoformat(start)
+      formatted_start =start_object.strftime('%A %B %d of %Y at %I:%M %p')
+
+      end = event["end"].get("dateTime")
+      end_object = datetime.datetime.fromisoformat(end)
+      formatted_end =end_object.strftime('%A %B %d of %Y at %I:%M %p')
+       
+      summary = event["summary"]
+
+      event = {
+        "start": formatted_start,
+        "end": formatted_end,
+        "summary": summary
+      }
+      events_list.append(event)      
+    logging.info("List of events: ",events_list)
+    return events_list
 
   except Exception as e:
-        print(e)
-
-
-# if __name__ == "__main__":
-#   main()
-        
-
+        logging.exception("Unexpected error occurred when checking calendar events.")
+        return ({"detail": " An unexpected error occurred, " + str(e)})

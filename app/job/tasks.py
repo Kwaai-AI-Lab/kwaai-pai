@@ -6,25 +6,30 @@ import logging
 from utilities.add_rag_source import add_rag_source
 from utilities.get_rag_response import get_rag_response
 import os
-import webbrowser
-urL='https://www.google.com'
+import datetime
 
 
 celery = Celery('tasks', broker='redis://redis:6379/0')
-# chrome_path="C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-# webbrowser.register('chrome', None,webbrowser.BackgroundBrowser(chrome_path),1)
-# webbrowser.get('chrome').open_new_tab(urL)
+
 
 @shared_task
 def process_unseen_emails():
     try:
+        
+        today = datetime.datetime.now().strftime('%A %B %d of %Y at %I:%M %p')
+        logging.info("Today is: ", today)     
+
         unseen_emails = get_unseen_emails()
-        start_e, end_e, summary = check_calendar_events()
-        # start_e= '2024-03-08T9:30:00-07:00'
-        # end_e= '2024-03-08T10:30:00-07:00'
-        summary= 'Kwaai backend meeting'
+        events = check_calendar_events()
+        all_events = ""
+
+        if events:
+            for event in events:
+                all_events += f"start: {event['start']}, end: {event['end']}, summary: {event['summary']}\n"
+        else:
+            all_events = "No events soon"
+        
         logging.info(f"Directory: {os.popen('ls -lha /app/utilities/').read()}")
-        logging.info(f"Calendar events: {start_e}, {end_e}, {summary}")
         if not unseen_emails:
             logging.info("No unseen emails")
             return            
@@ -35,6 +40,7 @@ def process_unseen_emails():
             if len(csv_files) > 0:            
                 add_rag_source(path + csv_files[-1])                      
             for unseen_email in unseen_emails:
+                date_proposed = get_rag_response('What is the date time proposed in this email? :'+ unseen_email['Body']) 
                 llm_response = create_email_draft(
                     message_id = unseen_email['Message-ID'],
                     to_address = unseen_email['From'],                
@@ -45,12 +51,13 @@ def process_unseen_emails():
                                              + " \n\n" +",it answers only to the following thread id:"  + unseen_email['Message-ID'] 
                                              + " \n\n" +",it answers to the following email body:"  + unseen_email['Body']                                            
                                              + " \n\n" +",it does not include 'Subject:' phrase in the response." 
-                                             + " \n\n" +"A good email draft keeps the tone of the email body that could be personal or professional tone"
-                                             + " \n\n" +"You have to be careful to answer only on this thread id: " + unseen_email['Message-ID']
-                                             + " \n\n" +"if there is any conflict with the event: " + start_e + " and " + end_e + "and the date and time proposed in the email body" +
-                                               " \n\n" +"you have to answer to the email with the following message: " 
-                                                       +"I am sorry, I cannot attend the meeting at the proposed time. I have another meeting at the same time. Can we reschedule the meeting?")
-                                             )                
+                                             + " \n\n" +"A good email draft keeps the tone of the email body that could be personal or professional tone."
+                                             + " \n\n" +"You have to be careful to answer only on this thread id: " + unseen_email['Message-ID'] +"."
+                                             + " \n\n" +"You have to be aware that today is: " + today +" and the date and time proposed is: " + date_proposed
+                                             + " \n\n" + "and the next near events in your calendar are: " + all_events +"."
+                                             + " \n\n" +", so if there is any conflict with my event list: " + all_events + "and the date and time proposed:" + date_proposed
+                                             +  " \n\n" +"you have to answer to propose reschedule the meeting.")
+                )                                                             
             logging.info("llm_response: %s", llm_response)  
     except Exception as e:
         logging.exception(f"Error processing unseen emails: {e}")

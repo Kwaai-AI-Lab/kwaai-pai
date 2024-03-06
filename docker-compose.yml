@@ -63,13 +63,7 @@ services:
             - celery
         environment:
             - CELERYBEAT_CHDIR=/app/job
-    chrome:
-        image: selenium/standalone-chrome:latest
-        volumes:
-            - /dev/shm:/dev/shm
-        ports:
-            - "4444:4444"
-        command: "sh -c 'google-chrome-stable --no-sandbox --disable-gpu --headless'"
+
 
 volumes:
     dev-db-data:

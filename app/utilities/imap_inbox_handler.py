@@ -294,6 +294,7 @@ class ImapInboxHandler:
             """
             new_directories = [item for item in new_directories if item != 'Undefined']
             for i in range(len(df_final)):
+                self.mail.store(df_final['Id'][i], '-X-GM-LABELS', 'Processing...')
                 if df_final['label'][i] == 1:
                     self.mail.copy(df_final['Id'][i], 'Undefined')
                 else:
@@ -313,8 +314,7 @@ class ImapInboxHandler:
 
     def create_inbox_db(self, df_final_to_csv):
         """
-        This function creates a database of unseen emails.
-        
+        This function creates a database of unseen emails.        
         Args:
             df_final (pl.DataFrame): DataFrame of unseen emails.
         """
