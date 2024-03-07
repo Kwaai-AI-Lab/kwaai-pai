@@ -18,3 +18,4 @@ chromadb==0.4.14
 streamlit===1.28.1
 sentence-transformers
 pysqlite3-binary
+selenium
