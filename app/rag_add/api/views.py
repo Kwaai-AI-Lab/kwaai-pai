@@ -13,9 +13,10 @@ class RAGAddView(generics.GenericAPIView):
     def post(self, request,*args, **kwargs):
         try:
             path = 'utilities/'
-            csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]
-            print("csv_files list:", csv_files)
-            source =add_rag_source(path + csv_files[-1])
+            csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]           
+
+            if len(csv_files) > 0:
+                 source =add_rag_source(path + csv_files[-1])
             return Response(source, status=status.HTTP_200_OK)   
         except Exception as e:            
             logging.exception("Unexpected error occurred when adding RAG resources.")

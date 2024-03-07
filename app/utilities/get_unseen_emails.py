@@ -3,7 +3,7 @@ from utilities.imap_email_handler import ImapEmailHandler
 from utilities.imap_inbox_handler import ImapInboxHandler
 import logging
 
-DIRECTORIES = ['Personal', 'Professional', 'Education', 'Undefined']
+DIRECTORIES = ['Personal', 'Professional', 'Processing...','Generating...', 'Undefined']
 WORDS = ['no-reply', 'unsubscribe', 'noreply','-noreply','no_reply', 'not reply']
 EMAIL_DOMAINS =['@gmail.com', '@yahoo.com', '@hotmail.com', '@outlook.com']
 
@@ -23,6 +23,7 @@ def get_unseen_emails() -> list:
         email_inbox_manager.create_directories(DIRECTORIES)
         
         unseen_mail_ids = email_manager.search_emails('UNSEEN')
+        email_manager.processing_emails_label(unseen_mail_ids)
         if unseen_mail_ids:
             msgs_unformatted = email_manager.fetch_emails(unseen_mail_ids)
             donot_reply_mail_ids = email_inbox_manager.get_donot_reply_emails(msgs_unformatted, WORDS)

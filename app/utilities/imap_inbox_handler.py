@@ -294,9 +294,11 @@ class ImapInboxHandler:
             """
             new_directories = [item for item in new_directories if item != 'Undefined']
             for i in range(len(df_final)):
+                self.mail.store(df_final['Id'][i], '-X-GM-LABELS', 'Processing...')
                 if df_final['label'][i] == 1:
                     self.mail.copy(df_final['Id'][i], 'Undefined')
                 else:
+                    self.mail.copy(df_final['Id'][i], 'Generating...')
                     completion = CLIENT.chat.completions.create(
                         model= MODEL_TAGGING,
                         messages=[
@@ -307,14 +309,13 @@ class ImapInboxHandler:
                     chosen_label = completion.choices[0].message.content
     
                     if chosen_label in new_directories:
-                        self.mail.copy(df_final['Id'][i], chosen_label)
+                        self.mail.copy(df_final['Id'][i], chosen_label)                        
                     else:                        
                         logging.error(f"Unhandled label: {chosen_label}")
 
     def create_inbox_db(self, df_final_to_csv):
         """
-        This function creates a database of unseen emails.
-        
+        This function creates a database of unseen emails.        
         Args:
             df_final (pl.DataFrame): DataFrame of unseen emails.
         """
