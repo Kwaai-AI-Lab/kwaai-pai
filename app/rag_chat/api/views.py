@@ -7,8 +7,7 @@ from rag_chat.api.serializers import RagSerializer
 class RAGChatView(generics.GenericAPIView):
     """  
         Handle POST requests for RAG chat. 
-        Returns: rag_response
-           
+        Returns: rag_response     
     """
     serializer_class = RagSerializer
  
