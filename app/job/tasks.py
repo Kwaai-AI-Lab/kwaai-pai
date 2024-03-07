@@ -29,12 +29,13 @@ def process_unseen_emails():
             for unseen_email in unseen_emails:                
                 context = get_rag_response("Contextualize this email:"+ unseen_email['Body'])
                 llm_response = create_email_draft(
+                    id = unseen_email['Id'],
                     message_id = unseen_email['Message-ID'],
                     to_address = unseen_email['From'],
-                    subject = 'Re: ' + unseen_email['Subject'],
+                    subject = 'Re: ' + unseen_email['Subject'], 
                     prompt= get_rag_response("Write an email draft that follows these guidelines:"
                                              + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
-                                             + "\n\n2. Maintain the tone and style of George W. Bush."
+                                             + "\n\n2. Maintain the tone and style of George W Bush."
                                              + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
                                              + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
                                              + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."

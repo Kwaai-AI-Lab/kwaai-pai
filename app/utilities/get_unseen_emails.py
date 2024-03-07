@@ -3,7 +3,7 @@ from utilities.imap_email_handler import ImapEmailHandler
 from utilities.imap_inbox_handler import ImapInboxHandler
 import logging
 
-DIRECTORIES = ['Personal', 'Professional', 'Processing...', 'Undefined']
+DIRECTORIES = ['Personal', 'Professional', 'Processing...','Generating...', 'Undefined']
 WORDS = ['no-reply', 'unsubscribe', 'noreply','-noreply','no_reply', 'not reply']
 EMAIL_DOMAINS =['@gmail.com', '@yahoo.com', '@hotmail.com', '@outlook.com']
 

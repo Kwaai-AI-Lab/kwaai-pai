@@ -45,3 +45,7 @@ class ImapDraftHandler:
     
     def logout(self):
         self.mail.logout()
+
+    def remove_genrating_label(self, id):
+        self.mail.select('Inbox')
+        self.mail.store(id, '-X-GM-LABELS', 'Generating...')

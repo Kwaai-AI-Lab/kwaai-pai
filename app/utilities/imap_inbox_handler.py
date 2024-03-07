@@ -298,6 +298,7 @@ class ImapInboxHandler:
                 if df_final['label'][i] == 1:
                     self.mail.copy(df_final['Id'][i], 'Undefined')
                 else:
+                    self.mail.copy(df_final['Id'][i], 'Generating...')
                     completion = CLIENT.chat.completions.create(
                         model= MODEL_TAGGING,
                         messages=[
@@ -308,7 +309,7 @@ class ImapInboxHandler:
                     chosen_label = completion.choices[0].message.content
     
                     if chosen_label in new_directories:
-                        self.mail.copy(df_final['Id'][i], chosen_label)
+                        self.mail.copy(df_final['Id'][i], chosen_label)                        
                     else:                        
                         logging.error(f"Unhandled label: {chosen_label}")
 
