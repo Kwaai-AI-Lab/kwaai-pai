@@ -3,8 +3,6 @@ import logging
 import warnings
 from utilities.config import HUGGINGFACE_ACCESS_TOKEN
 from embedchain import App
-from app.settings import INBOX_DB_CONFIG
-# from embedchain.loaders.postgres import PostgresLoader
 
 os.environ["HUGGINGFACE_ACCESS_TOKEN"] = HUGGINGFACE_ACCESS_TOKEN
 
@@ -16,15 +14,12 @@ class RAGHandler:
             cls._instance = super(RAGHandler, cls).__new__(cls)
             cls._instance._rag_app = App.from_config(model_config)
         return cls._instance
-    
-    
 
     @property
     def rag_app(self):
         return self._rag_app
-
     
-    def get_rag_response(self,question) -> str:        
+    def get_rag_response(self, question) -> str:        
         try:
             logging.info(f"Executing query: {question}")
             with warnings.catch_warnings():
@@ -39,9 +34,3 @@ class RAGHandler:
         
     def add_source_csv(self, path):
         self.rag_app.add(path, data_type='csv')
-
-    # def add_source_postgres(self):         
-    #     postgres_loader = PostgresLoader(config=INBOX_DB_CONFIG)
-    #     self.rag_app.add("SELECT * FROM core_inboxemail;", data_type='postgres', loader=postgres_loader)
-
-       
