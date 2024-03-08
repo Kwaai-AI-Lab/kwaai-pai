@@ -1,7 +1,7 @@
 from rest_framework import status, generics
 from rest_framework.response import Response
 import logging
-from utilities.add_rag_source import add_rag_source
+from utilities.add_rag_source import add_rag_source_csv
 import os
 
 class RAGAddView(generics.GenericAPIView):
@@ -16,7 +16,7 @@ class RAGAddView(generics.GenericAPIView):
             csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]           
 
             if len(csv_files) > 0:
-                 source =add_rag_source(path + csv_files[-1])
+                 source =add_rag_source_csv(path + csv_files[-1])
             return Response(source, status=status.HTTP_200_OK)   
         except Exception as e:            
             logging.exception("Unexpected error occurred when adding RAG resources.")

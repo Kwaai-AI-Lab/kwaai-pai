@@ -2,11 +2,9 @@ from celery import Celery, shared_task
 from utilities.create_email_draft import create_email_draft
 from utilities.get_unseen_emails import get_unseen_emails
 import logging
-from utilities.add_rag_source import add_rag_source
+from utilities.add_rag_source import add_rag_source_csv, add_rag_source_docx
 from utilities.get_rag_response import get_rag_response
 import os
-import datetime
-
 
 celery = Celery('tasks', broker='redis://redis:6379/0')
 
@@ -14,19 +12,26 @@ celery = Celery('tasks', broker='redis://redis:6379/0')
 @shared_task
 def process_unseen_emails():
     try:
-        unseen_emails = get_unseen_emails()        
-
+        path = 'utilities/'
         logging.info(f"Directory: {os.popen('ls -lha /app/utilities/').read()}")
+        
+        is_style_added = False
+        if not is_style_added:            
+            add_rag_source_docx(path + "style.docx")
+            style = get_rag_response("Get the linguistic style")
+            is_style_added = True
+
+        unseen_emails = get_unseen_emails()
         if not unseen_emails:
             logging.info("No unseen emails")
             return
-        else:
-            path = 'utilities/'
+        else:            
             csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]
             logging.info("csv_files list:", csv_files)
-            if len(csv_files) > 0:
-                add_rag_source(path + csv_files[-1])
-            for unseen_email in unseen_emails:                
+            if len(csv_files) > 0:                
+                add_rag_source_csv(path + csv_files[-1])
+            
+            for unseen_email in unseen_emails:
                 context = get_rag_response("Contextualize this email:"+ unseen_email['Body'])
                 llm_response = create_email_draft(
                     id = unseen_email['Id'],
@@ -35,7 +40,7 @@ def process_unseen_emails():
                     subject = 'Re: ' + unseen_email['Subject'], 
                     prompt= get_rag_response("Write an email draft that follows these guidelines:"
                                              + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
-                                             + "\n\n2. Maintain the tone and style of George W Bush."
+                                             + "\n\n2. Maintain the tone and style following the detailed outline of her style,'"+ style + "' in your response."
                                              + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
                                              + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
                                              + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."

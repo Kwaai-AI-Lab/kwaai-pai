@@ -34,3 +34,6 @@ class RAGHandler:
         
     def add_source_csv(self, path):
         self.rag_app.add(path, data_type='csv')
+
+    def add_source_docx(self, path):
+        self.rag_app.add(path, data_type='docx')

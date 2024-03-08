@@ -19,3 +19,4 @@ streamlit===1.28.1
 sentence-transformers
 pysqlite3-binary
 selenium
+docx2txt
