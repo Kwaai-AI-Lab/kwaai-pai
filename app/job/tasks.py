@@ -16,6 +16,7 @@ def process_unseen_emails():
         logging.info(f"Directory: {os.popen('ls -lha /app/utilities/').read()}")
         
         is_style_added = False
+
         if not is_style_added:            
             add_rag_source_docx(path + "style.docx")
             style = get_rag_response("Get the linguistic style")
@@ -44,7 +45,7 @@ def process_unseen_emails():
                                              + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
                                              + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
                                              + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
-                                             + "\n\n6. If the context '"+ context + "' suggests an invitation (e.g., to a meeting, cinema, fair, cafe, just to chat or hang out), respond appropriately and invite to check my Google Calendar by clicking on the following link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8' ."
+                                             + "\n\n6. If the context '"+ context + "' implies an invitation (e.g., to a meeting, cinema, fair, cafe, just to chat or hang out), respond appropriately and invite to check my Google Calendar by clicking on the following link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8' ."
                                              + "\n\n7. Respond only to the context provided without diverging into unrelated topics."
                                              + "\n\n8. Ensure that your draft is concise, polite, and to the point, respecting the conversation's history '"+ unseen_email['Message-ID'] +"'."
                                              + "\n\n9. End the email with a respectful and personalized closing like 'Best regards' or 'Sincerely'."
