@@ -5,9 +5,7 @@ LLAMAFILE_REPOSITORY_PATH=llamafile
 
 all: run-install-python-dependencies \
 	run-download-llamafile \
-	run-clone-repositories \
-	run-merge-models \
-    run-quantize-llama-model
+	run-clone-repositories 
 
 run-install-python-dependencies:
 	pip3 install -r requirements.local.txt
