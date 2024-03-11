@@ -34,25 +34,20 @@ def process_unseen_emails():
                     message_id = unseen_email['Message-ID'],
                     to_address = unseen_email['From'],
                     subject = 'Re: ' + unseen_email['Subject'], 
-                    prompt= get_rag_response("Write an email draft that follows these guidelines:"
-                                             + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
-                                             + "\n\n2. Maintain the tone and style of George W Bush."
-                                             + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
-                                             + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
-                                             + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
-                                             + "\n\n6. If the context '"+ context + "' suggests an invitation (e.g., to a meeting, cinema, fair, cafe, just to chat or hang out), respond appropriately and invite to check my Google Calendar by clicking on the following link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8' ."
-                                             + "\n\n7. Respond only to the context provided without diverging into unrelated topics."
-                                             + "\n\n8. Ensure that your draft is concise, polite, and to the point, respecting the conversation's history '"+ unseen_email['Message-ID'] +"'."
-                                             + "\n\n9. End the email with a respectful and personalized closing like 'Best regards' or 'Sincerely'."
-                                             + "\n\n10. Do not include any disclaimers or explanatory notes within the response (e.g, Note:)."
-                                             + "\n\nFocus solely on responding within the context and requirements of this specific email thread '"+ unseen_email['Message-ID'] +"'."
-                                             ) + get_llm_response("Write an email draft that follows these guidelines:"
-                                                + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
-                                                + "\n\n2. Maintain the tone and style of George W Bush."
-                                                + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
-                                                + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
-                                                + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
-                                             )
+                    prompt= get_llm_response(
+                        "Write an email draft that follows these guidelines:"
+                        + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
+                        + "\n\n2. Maintain the tone and style of George W Bush."
+                        + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
+                        + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
+                        + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
+                        + "\n\n6. If the context '"+ context + "' suggests an invitation (e.g., to a meeting, cinema, fair, cafe, just to chat or hang out), respond appropriately and invite to check my Google Calendar by clicking on the following link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8' ."
+                        + "\n\n7. Respond only to the context provided without diverging into unrelated topics."
+                        + "\n\n8. Ensure that your draft is concise, polite, and to the point, respecting the conversation's history '"+ unseen_email['Message-ID'] +"'."
+                        + "\n\n9. End the email with a respectful and personalized closing like 'Best regards' or 'Sincerely'."
+                        + "\n\n10. Do not include any disclaimers or explanatory notes within the response (e.g, Note:)."
+                        + "\n\nFocus solely on responding within the context and requirements of this specific email thread '"+ unseen_email['Message-ID'] +"'."                 
+                    )
                 )
             
             logging.info("llm_response: %s", llm_response)
