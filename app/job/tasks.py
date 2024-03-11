@@ -4,6 +4,7 @@ from utilities.get_unseen_emails import get_unseen_emails
 import logging
 from utilities.add_rag_source import add_rag_source
 from utilities.get_rag_response import get_rag_response
+from utilities.llm_response import get_llm_response
 import os
 import datetime
 
@@ -45,6 +46,12 @@ def process_unseen_emails():
                                              + "\n\n9. End the email with a respectful and personalized closing like 'Best regards' or 'Sincerely'."
                                              + "\n\n10. Do not include any disclaimers or explanatory notes within the response (e.g, Note:)."
                                              + "\n\nFocus solely on responding within the context and requirements of this specific email thread '"+ unseen_email['Message-ID'] +"'."
+                                             ) + get_llm_response("Write an email draft that follows these guidelines:"
+                                                + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
+                                                + "\n\n2. Maintain the tone and style of George W Bush."
+                                                + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
+                                                + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
+                                                + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
                                              )
                 )
             

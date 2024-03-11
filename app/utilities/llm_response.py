@@ -1,9 +1,11 @@
 import requests
 import json
 
-def stream_response_and_concatenate(prompt):
+from utilities.config import SERVER_IP
+
+def get_llm_response(prompt):
     """Stream the response of a POST request and concatenate the content."""
-    DOCKER_SERVER_URL = "http://host.docker.internal:8080/completion"
+    DOCKER_SERVER_URL = f"http://{SERVER_IP}:8080/completion"
     HEADERS = {
         'Connection': 'keep-alive',
         'Content-Type': 'application/json',
