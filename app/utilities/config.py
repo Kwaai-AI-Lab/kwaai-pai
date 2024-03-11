@@ -11,13 +11,13 @@ EMAILS_DATA_SET_PATH = './sent_box_emails.csv'
 KEYWORD = 'FROM'
 
 EMAIL_CREDENTIALS = {
-    "email": "yoda.kwaai.test@gmail.com",
-    "password": "nntv eeug lzpn zmeo",
-    "imap_server": "imap.gmail.com",
+    "email": os.environ.get("IMAP_EMAIL"),
+    "password": os.environ.get("IMAP_PASSWORD"),
+    "imap_server": os.environ.get("IMAP_SERVER"),
 }
 
-OPENAI_API_KEY = "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"
-HUGGINGFACE_ACCESS_TOKEN = "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"
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+HUGGINGFACE_ACCESS_TOKEN = os.environ.get("HUGGINGFACE_ACCESS_TOKEN")
 
 EC_APP_CONFIG = {
     "app": {
