@@ -1,10 +1,9 @@
 import requests
 import json
 
-
 def get_llm_response(prompt):
     """Stream the response of a POST request and concatenate the content."""
-    DOCKER_SERVER_URL = "http://host.docker.internal:8080/completion"
+    DOCKER_SERVER_URL = "http://localhost:8080/completion"
     HEADERS = {
         'Connection': 'keep-alive',
         'Content-Type': 'application/json',

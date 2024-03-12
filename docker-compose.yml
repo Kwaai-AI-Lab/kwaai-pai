@@ -16,7 +16,7 @@ services:
             sh -c "python manage.py wait_for_db &&
                    python manage.py migrate &&
                    python manage.py runserver 0.0.0.0:8000"
-        
+        network_mode: "host"
         environment:
             - DB_PORT=5432
             - DB_HOST=${DB_HOST}
@@ -60,6 +60,7 @@ services:
             - CELERY_CHDIR=${CELERY_CHDIR}
             - OPENAI_API_KEY=${OPENAI_API_KEY}
             - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
+        network_mode: "host"
     celery_beat:
         build:
             context: .
@@ -73,6 +74,7 @@ services:
             - CELERYBEAT_CHDIR=${CELERYBEAT_CHDIR}
             - OPENAI_API_KEY=${OPENAI_API_KEY}
             - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
+        network_mode: "host"
 volumes:
     dev-db-data:
     dev-static-data:
