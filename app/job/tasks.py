@@ -5,7 +5,11 @@ import logging
 from utilities.add_rag_source import add_rag_source_csv, add_rag_source_docx
 from utilities.get_rag_response import get_rag_response
 import os
+from utilities.config import MODEL_SPAM_FILTER, OPENAI_API_KEY, MODEL_TAGGING
 
+from openai import OpenAI
+
+CLIENT = OpenAI(api_key= OPENAI_API_KEY)
 celery = Celery('tasks', broker='redis://redis:6379/0')
 
 
@@ -14,45 +18,68 @@ def process_unseen_emails():
     try:
         path = 'utilities/'
         logging.info(f"Directory: {os.popen('ls -lha /app/utilities/').read()}")
-        
-        is_style_added = False
-        if not is_style_added:            
-            add_rag_source_docx(path + "style.docx")
-            style = get_rag_response("Get the linguistic style")
-            is_style_added = True
 
+        # Ensure stylistic guidelines are set up and retrieved only once.
+        if 'style' not in globals():
+            global style
+            add_rag_source_docx(path + "style.docx")
+            style = get_rag_response("Extract the linguistic style guidelines.")
+        
+        # Retrieve unseen emails and check for new content.
         unseen_emails = get_unseen_emails()
         if not unseen_emails:
-            logging.info("No unseen emails")
+            logging.info("No unseen emails to process.")
             return
-        else:            
+        else:
+            # Update the context with the most recent emails for accuracy.
             csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]
-            logging.info("csv_files list:", csv_files)
-            if len(csv_files) > 0:                
-                add_rag_source_csv(path + csv_files[-1])
-            
+            logging.info(f"List of CSV files: {csv_files}")
+            if csv_files:
+                latest_csv = sorted(csv_files)[-1]  # Ensure the latest file is used.
+                add_rag_source_csv(path + latest_csv)
+
             for unseen_email in unseen_emails:
-                context = get_rag_response("Contextualize this email:"+ unseen_email['Body'])
-                llm_response = create_email_draft(
-                    id = unseen_email['Id'],
-                    message_id = unseen_email['Message-ID'],
-                    to_address = unseen_email['From'],
-                    subject = 'Re: ' + unseen_email['Subject'], 
-                    prompt= get_rag_response("Write an email draft that follows these guidelines:"
-                                             + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
-                                             + "\n\n2. Maintain the tone and style following the detailed outline of her style,'"+ style + "' in your response."
-                                             + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
-                                             + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
-                                             + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
-                                             + "\n\n6. If the context '"+ context + "' suggests an invitation (e.g., to a meeting, cinema, fair, cafe, just to chat or hang out), respond appropriately and invite to check my Google Calendar by clicking on the following link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8' ."
-                                             + "\n\n7. Respond only to the context provided without diverging into unrelated topics."
-                                             + "\n\n8. Ensure that your draft is concise, polite, and to the point, respecting the conversation's history '"+ unseen_email['Message-ID'] +"'."
-                                             + "\n\n9. End the email with a respectful and personalized closing like 'Best regards' or 'Sincerely'."
-                                             + "\n\n10. Do not include any disclaimers or explanatory notes within the response (e.g, Note:)."
-                                             + "\n\nFocus solely on responding within the context and requirements of this specific email thread '"+ unseen_email['Message-ID'] +"'."
-                                             )
+                # Process each email individually for context and content.
+                email_contextualization = get_rag_response(f"Provide context and summary for this email: {unseen_email['Body']}")
+
+                # Check if the email implies a meeting or invitation.
+                is_meeting_response = CLIENT.chat.completions.create(
+                        model=MODEL_TAGGING,
+                        messages=[
+                            {"role": "system", "content": "You're a meeting identification assistant."},
+                            {"role": "user", "content": f"Decide if this email content implies a meeting invitation: {unseen_email['Body']}"}
+                        ]
                 )
-            
+                meeting_decision = is_meeting_response.choices[0].message.content
+                logging.info(f"Meeting decision: {meeting_decision}")
+
+                llm_response = create_email_draft(
+                    id=unseen_email['Id'],
+                    message_id=unseen_email['Message-ID'],
+                    to_address=unseen_email['From'],
+                    subject=unseen_email['Subject'], 
+                    prompt=get_rag_response(
+                        f"Draft a response considering the following guidelines and information:"
+                        f"\n\n1. Address the sender personally, using the name {unseen_email['From']}."
+                        f"\n\n2. Apply the provided stylistic guidelines: {style}."
+                        f"\n\n3. Answer specifically to the queries or content in the email: {unseen_email['Body']}."
+                        f"\n\n4. Filter the context only in this email thread ({unseen_email['Message-ID']})."
+                        f"\n\n Ensure the response is directly relevant to this thread ({unseen_email['Message-ID']}) only."
+                        f"\n\n5. Avoid beginning responses with 'Subject: Re:'."
+                        "\n\n6. If the email implies any form of invitation (meeting, coffee, dinner, movie), acknowledge it and suggest arranging the details through the link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8'. Specify the nature of the invitation to ensure clarity."
+                        f"\n\n7. Draft should be clear, polite, and concise, respecting the original email's context."
+                        f"\n\n8. Finish with a signature that matches the user's usual sign-off."
+                        f"\n\n9. Exclude any disclaimers, footnotes, or irrelevant details."
+                        f"\n\n10. Focus on maintaining the continuity and relevance to the specific email thread."
+                        f"\n\n11. Check for any attachments mentioned and acknowledge if any action is required."
+                        f"\n\n12. Confirm any dates, times, or details mentioned in the email to avoid misunderstandings."
+                        f"\n\n13. Ensure that the tone is appropriate for the relationship with the sender."
+                        f"\n\n14. If necessary, politely decline any requests or invitations that cannot be accommodated."
+                        f"\n\n15. Confirm the receipt of any important information or documents included in the email."
+                        "\n\n16. Don't mix the context with other emails or threads."
+                    )
+                )
+           
             logging.info("llm_response: %s", llm_response)
     except Exception as e:
         logging.exception(f"Error processing unseen emails: {e}")
@@ -60,4 +87,3 @@ def process_unseen_emails():
 @celery.task
 def process_new_emails(emails):
     logging.info(f"Processing new emails: {emails}")
-
