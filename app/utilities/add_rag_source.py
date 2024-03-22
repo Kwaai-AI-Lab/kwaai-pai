@@ -8,3 +8,7 @@ def add_rag_source_csv(path) -> str:
 def add_rag_source_docx(path) -> str:
     rag_manager = RAGHandler(MODEL_RAG)
     rag_manager.add_source_docx(path)
+
+def add_postgres_source() -> str:
+    rag_manager = RAGHandler(MODEL_RAG)
+    rag_manager.add_postgres_source()

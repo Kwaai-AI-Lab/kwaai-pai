@@ -46,9 +46,10 @@ RUN adduser --disabled-password --no-create-home django-user && \
 RUN /py/bin/pip install --upgrade pip && \
     /py/bin/pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-RUN /py/bin/pip install selenium && \
-    /py/bin/pip install webdriver-manager && \
-    /py/bin/pip install docx2txt
+RUN /py/bin/pip install embedchain && \ 
+    /py/bin/pip install --upgrade 'embedchain[postgres]'
+
+RUN /py/bin/pip install docx2txt
 
 RUN mkdir -p /home/django-user/.cache/huggingface && \
     chown -R django-user:django-user /home/django-user/.cache/huggingface

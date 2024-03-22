@@ -20,3 +20,5 @@ sentence-transformers
 pysqlite3-binary
 selenium
 docx2txt
+langchain-community==0.0.19
+langchain==0.1.8
