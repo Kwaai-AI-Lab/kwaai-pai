@@ -17,12 +17,14 @@ from core.models import InboxEmail
 from openai import OpenAI
 
 CLIENT = OpenAI(api_key= OPENAI_API_KEY)
+CLIENT = OpenAI(api_key= OPENAI_API_KEY)
 
 class ImapInboxHandler:
     def __init__(
             self, 
             user, 
             password, 
+            imap_server = 'imap.gmail.com'
             imap_server = 'imap.gmail.com'
         ) -> None:
         self.user = user
@@ -228,7 +230,9 @@ class ImapInboxHandler:
 
             df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answer_mail_ids)) 
 
+
             df_no_reply = df_no_reply.with_columns(
+                df_no_reply['label'].replace([0], [1])
                 df_no_reply['label'].replace([0], [1])
             )
 
@@ -258,8 +262,10 @@ class ImapInboxHandler:
                 result_list.append(result_dict)
 
             return result_list, df_final, df_final_to_csv
+            return result_list, df_final, df_final_to_csv
         
         except pl.exceptions.PolarsError as e:            
+            return [],[], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
             return [],[], pl.DataFrame({'error_message': [f"Empty Data Error: {e}"]})
         except ValueError as e:
             return [],[], pl.DataFrame({'error_message': [f"Value Error: {e}"]})
@@ -303,6 +309,7 @@ class ImapInboxHandler:
                         model= MODEL_TAGGING,
                         messages=[
                             {"role": "system", "content": "You're a classifier email bot."},
+                            {"role": "user", "content": f"Classify the purpose of the following email as either  {', '.join(map(str, new_directories))} based on its content. Please provide a clear and concise categorization without explaining the reasons for your classification, Be carefully with all the context of the email. I just need 1 word,  {', '.join(map(str, new_directories))}:\n\n{df_final[i]}"}
                             {"role": "user", "content": f"Classify the purpose of the following email as either  {', '.join(map(str, new_directories))} based on its content. Please provide a clear and concise categorization without explaining the reasons for your classification, Be carefully with all the context of the email. I just need 1 word,  {', '.join(map(str, new_directories))}:\n\n{df_final[i]}"}
                         ]
                     )

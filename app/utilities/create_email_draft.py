@@ -18,6 +18,7 @@ def create_email_draft(
     )
 
     # llm_response = stream_response_and_concatenate(prompt)
+    # llm_response = stream_response_and_concatenate(prompt)
 
 
     draft_manager.login()

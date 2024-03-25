@@ -2,7 +2,7 @@ from celery import Celery, shared_task
 from utilities.create_email_draft import create_email_draft
 from utilities.get_unseen_emails import get_unseen_emails
 import logging
-from utilities.add_rag_source import add_rag_source_csv, add_rag_source_docx, add_postgres_source
+from utilities.add_rag_source import add_postgres_source
 from utilities.get_rag_response import get_rag_response
 import os
 
@@ -13,24 +13,11 @@ def process_unseen_emails():
     try:
         path = 'utilities/'
         logging.info(f"Directory: {os.popen('ls -lha /app/utilities/').read()}")
-
-        # # Ensure stylistic guidelines are set up and retrieved only once.
-        # if 'style' not in globals():
-        #     global style
-        #     add_rag_source_docx(path + "style.docx")
-        #     style = get_rag_response("Extract the linguistic style guidelines.")
-        #     logging.info("style-----------------------", style)
-        
         unseen_emails = get_unseen_emails()
         if not unseen_emails:
             logging.info("No unseen emails to process.")
             return
-        else:            
-            # csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]
-            # logging.info(f"List of CSV files: {csv_files}")
-            # if csv_files:
-            #     latest_csv = sorted(csv_files)[-1]
-            #     add_rag_source_csv(path + latest_csv)
+        else:
 
             add_postgres_source()
 
@@ -42,9 +29,7 @@ def process_unseen_emails():
                     subject=unseen_email['Subject'], 
                     prompt=get_rag_response(
                         f"Draft a response considering the following guidelines and information:"
-                        f"\n\n1. Address the sender personally, using the name {unseen_email['From']}."
-                        # f"\n\n2. Apply the provided stylistic guidelines: {style}."
-                        f"\n\n2. Answer specifically to the queries or content in the email: {unseen_email['Body']}."
+                        f"\n\n1. Address the sender personally, using the name {unseen_email['From']}."f"\n\n2. Answer specifically to the queries or content in the email: {unseen_email['Body']}."
                         f"\n\n3. Filter the context only in this email thread ({unseen_email['Message-ID']})."
                         f"\n\n Ensure the response is directly relevant to this thread ({unseen_email['Message-ID']}) only."
                         f"\n\n4. Avoid beginning responses with 'Subject: Re:'."

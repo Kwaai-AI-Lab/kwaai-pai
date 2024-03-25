@@ -1,6 +1,5 @@
 version: "3.9"
 
-
 services:
     app:
         build:
@@ -22,12 +21,14 @@ services:
             - DB_NAME=${DB_NAME}
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
-            - DEBUG=${DEBUG}            	
-
+            - DEBUG=${DEBUG}
+            
             - IMAP_HOST=${IMAP_HOST}
             - IMAP_EMAIL=${IMAP_EMAIL}
-            - IMAP_PASSWORD=${IMAP_PASSWORD}             
+            - IMAP_PASSWORD=${IMAP_PASSWORD}
 
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
         depends_on:
             - db
             - redis
@@ -66,7 +67,9 @@ services:
             - redis
             - celery
         environment:
-            - CELERYBEAT_CHDIR=/app/job
+            - CELERYBEAT_CHDIR=${CELERYBEAT_CHDIR}
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
 
 volumes:
     dev-db-data:

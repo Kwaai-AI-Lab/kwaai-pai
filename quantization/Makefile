@@ -10,6 +10,7 @@ all: run-install-python-dependencies \
     run-quantize-llama-model
 
 run-install-python-dependencies:
+	cd .. && \
 	pip3 install -r requirements.local.txt
 
 run-download-llamafile:
@@ -17,7 +18,8 @@ run-download-llamafile:
 	mv llava-v1.5-7b-q4.llamafile?download=true llava.llamafile
 
 run-clone-repositories:
-	git clone https://github.com/ggerganov/llama.cpp.git
+	git clone https://github.com/ggerganov/llama.cpp.git && \
+	git clone https://github.com/Mozilla-Ocho/llamafile.git
 
 run-merge-models:
 	python3 merge_model.py
