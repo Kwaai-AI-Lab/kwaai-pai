@@ -22,11 +22,17 @@ services:
             - DB_NAME=${DB_NAME}
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
-            - DEBUG=${DEBUG}            	
+            - DEBUG=${DEBUG}
 
             - IMAP_HOST=${IMAP_HOST}
             - IMAP_EMAIL=${IMAP_EMAIL}
-            - IMAP_PASSWORD=${IMAP_PASSWORD}             
+            - IMAP_PASSWORD=${IMAP_PASSWORD}  
+
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}           
+
+        env_file:
+            - .env
 
         depends_on:
             - db
@@ -50,11 +56,27 @@ services:
     
     celery:
         build: .
-        command: celery -A job worker -l info
-        volumes:
-            - ./app:/app
         depends_on:
             - redis
+        volumes:
+            - ./app:/app
+        command: celery -A job worker -l info
+        environment:
+            - CELERY_CHDIR=${CELERYBEAT_CHDIR}
+
+            - DB_PORT=5432
+            - DB_HOST=${DB_HOST}
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - DEBUG=${DEBUG}
+
+            - IMAP_HOST=${IMAP_HOST}
+            - IMAP_EMAIL=${IMAP_EMAIL}
+            - IMAP_PASSWORD=${IMAP_PASSWORD}
+
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}      
             
     celery_beat:
         build:
@@ -66,7 +88,21 @@ services:
             - redis
             - celery
         environment:
-            - CELERYBEAT_CHDIR=/app/job
+            - CELERYBEAT_CHDIR=${CELERYBEAT_CHDIR}
+
+            - DB_PORT=5432
+            - DB_HOST=${DB_HOST}
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - DEBUG=${DEBUG}
+
+            - IMAP_HOST=${IMAP_HOST}
+            - IMAP_EMAIL=${IMAP_EMAIL}
+            - IMAP_PASSWORD=${IMAP_PASSWORD}
+
+            - OPENAI_API_KEY=${OPENAI_API_KEY}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}      
 
 volumes:
     dev-db-data:
