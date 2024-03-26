@@ -2,52 +2,48 @@ from celery import Celery, shared_task
 from utilities.create_email_draft import create_email_draft
 from utilities.get_unseen_emails import get_unseen_emails
 import logging
-from utilities.add_rag_source import add_rag_source
+from utilities.add_rag_source import add_postgres_source
 from utilities.get_rag_response import get_rag_response
-import os
-import datetime
-
 
 celery = Celery('tasks', broker='redis://redis:6379/0')
 
-
 @shared_task
 def process_unseen_emails():
-    try:
-        unseen_emails = get_unseen_emails()        
-
-        logging.info(f"Directory: {os.popen('ls -lha /app/utilities/').read()}")
+    try:        
+        unseen_emails = get_unseen_emails()
         if not unseen_emails:
-            logging.info("No unseen emails")
+            logging.info("No unseen emails to process.")
             return
-        else:
-            path = 'utilities/'
-            csv_files = [f for f in os.listdir(path) if f.startswith('inbox_') and f.endswith('.csv')]
-            logging.info("csv_files list:", csv_files)
-            if len(csv_files) > 0:
-                add_rag_source(path + csv_files[-1])
-            for unseen_email in unseen_emails:                
-                context = get_rag_response("Contextualize this email:"+ unseen_email['Body'])
+        else:            
+            add_postgres_source()
+
+            for unseen_email in unseen_emails:
                 llm_response = create_email_draft(
-                    id = unseen_email['Id'],
-                    message_id = unseen_email['Message-ID'],
-                    to_address = unseen_email['From'],
-                    subject = 'Re: ' + unseen_email['Subject'], 
-                    prompt= get_rag_response("Write an email draft that follows these guidelines:"
-                                             + "\n\n1. Answer to the sender's name '" + unseen_email['From'] + "'."
-                                             + "\n\n2. Maintain the tone and style of George W Bush."
-                                             + "\n\n3. Directly address the content provided by the sender in the email body: '" + unseen_email['Body'] + "', and answer it."
-                                             + "\n\n4. Stay relevant to the thread ID: " + unseen_email['Message-ID'] + ", and avoid mixing or referencing other email threads or conversations."
-                                             + "\n\n5. Must exclude any phrases starting with 'Subject: Re:' in your response."
-                                             + "\n\n6. If the context '"+ context + "' suggests an invitation (e.g., to a meeting, cinema, fair, cafe, just to chat or hang out), respond appropriately and invite to check my Google Calendar by clicking on the following link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8' ."
-                                             + "\n\n7. Respond only to the context provided without diverging into unrelated topics."
-                                             + "\n\n8. Ensure that your draft is concise, polite, and to the point, respecting the conversation's history '"+ unseen_email['Message-ID'] +"'."
-                                             + "\n\n9. End the email with a respectful and personalized closing like 'Best regards' or 'Sincerely'."
-                                             + "\n\n10. Do not include any disclaimers or explanatory notes within the response (e.g, Note:)."
-                                             + "\n\nFocus solely on responding within the context and requirements of this specific email thread '"+ unseen_email['Message-ID'] +"'."
-                                             )
+                    id=unseen_email['Id'],
+                    message_id=unseen_email['Message-ID'],
+                    to_address=unseen_email['From'],
+                    subject=unseen_email['Subject'], 
+                    prompt=get_rag_response(
+                        f"Draft a response considering the following guidelines and information:"
+                        f"\n\n1. Address the sender personally, using the name {unseen_email['From']}."
+                        f"\n\n2. Answer specifically to the queries or content in the email: {unseen_email['Body']}."
+                        f"\n\n3. Filter the context only in this email thread ({unseen_email['Message-ID']})."
+                        f"\n\n Ensure the response is directly relevant to this thread ({unseen_email['Message-ID']}) only."
+                        f"\n\n4. Avoid beginning responses with 'Subject: Re:'."
+                        "\n\n5. If the email implies any form of invitation (meeting, coffee, dinner, movie), acknowledge it and suggest arranging the details through the link: 'https://calendar.app.google/4CV2J22aYaLiWRxL8'. Specify the nature of the invitation to ensure clarity."
+                        f"\n\n6. Draft should be clear, polite, and concise, respecting the original email's context."
+                        f"\n\n7. Finish with a signature that matches the user's usual sign-off."
+                        f"\n\n8. Exclude any disclaimers, footnotes, or irrelevant details."
+                        f"\n\n9. Focus on maintaining the continuity and relevance to the specific email thread."
+                        f"\n\n10. Check for any attachments mentioned and acknowledge if any action is required."
+                        f"\n\n11. Confirm any dates, times, or details mentioned in the email to avoid misunderstandings."
+                        f"\n\n12. Ensure that the tone is appropriate for the relationship with the sender."
+                        f"\n\n13. If necessary, politely decline any requests or invitations that cannot be accommodated."
+                        f"\n\n14. Confirm the receipt of any important information or documents included in the email."
+                        "\n\n15. Don't mix the context with other emails or threads."
+                    )
                 )
-            
+           
             logging.info("llm_response: %s", llm_response)
     except Exception as e:
         logging.exception(f"Error processing unseen emails: {e}")
@@ -55,4 +51,3 @@ def process_unseen_emails():
 @celery.task
 def process_new_emails(emails):
     logging.info(f"Processing new emails: {emails}")
-

@@ -11,12 +11,11 @@ services:
             - "8000:8000"
         volumes:
             - ./app:/app
-            - dev-static-data:/vol/web            
+            - dev-static-data:/vol/web
         command: >
             sh -c "python manage.py wait_for_db &&
                    python manage.py migrate &&
                    python manage.py runserver 0.0.0.0:8000"
-        
         environment:
             - DB_PORT=5432
             - DB_HOST=${DB_HOST}
@@ -24,13 +23,17 @@ services:
             - DB_USER=${DB_USER}
             - DB_PASS=${DB_PASS}
             - DEBUG=${DEBUG}
-            
+
             - IMAP_HOST=${IMAP_HOST}
             - IMAP_EMAIL=${IMAP_EMAIL}
-            - IMAP_PASSWORD=${IMAP_PASSWORD}
+            - IMAP_PASSWORD=${IMAP_PASSWORD}  
 
             - OPENAI_API_KEY=${OPENAI_API_KEY}
-            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}           
+
+        env_file:
+            - .env
+
         depends_on:
             - db
             - redis
@@ -50,16 +53,31 @@ services:
         ports:
             - "6379:6379"
         command: redis-server --bind 0.0.0.0
-
+    
     celery:
         build: .
         depends_on:
             - redis
+        volumes:
+            - ./app:/app
         command: celery -A job worker -l info
         environment:
-            - CELERY_CHDIR=${CELERY_CHDIR}
+            - CELERY_CHDIR=${CELERYBEAT_CHDIR}
+
+            - DB_PORT=5432
+            - DB_HOST=${DB_HOST}
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - DEBUG=${DEBUG}
+
+            - IMAP_HOST=${IMAP_HOST}
+            - IMAP_EMAIL=${IMAP_EMAIL}
+            - IMAP_PASSWORD=${IMAP_PASSWORD}
+
             - OPENAI_API_KEY=${OPENAI_API_KEY}
-            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}      
+            
     celery_beat:
         build:
             context: .
@@ -71,9 +89,21 @@ services:
             - celery
         environment:
             - CELERYBEAT_CHDIR=${CELERYBEAT_CHDIR}
+
+            - DB_PORT=5432
+            - DB_HOST=${DB_HOST}
+            - DB_NAME=${DB_NAME}
+            - DB_USER=${DB_USER}
+            - DB_PASS=${DB_PASS}
+            - DEBUG=${DEBUG}
+
+            - IMAP_HOST=${IMAP_HOST}
+            - IMAP_EMAIL=${IMAP_EMAIL}
+            - IMAP_PASSWORD=${IMAP_PASSWORD}
+
             - OPENAI_API_KEY=${OPENAI_API_KEY}
-            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}
+            - HUGGINGFACE_ACCESS_TOKEN=${HUGGINGFACE_ACCESS_TOKEN}      
+
 volumes:
     dev-db-data:
     dev-static-data:
-    celerybeat-data:

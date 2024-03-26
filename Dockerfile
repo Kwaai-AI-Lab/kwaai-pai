@@ -16,11 +16,9 @@ ARG DEV=true
 # RUN apt-get update 
 
 # Install Chrome
-RUN apt-get update && apt-get install -y wget gnupg2 \
-    && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+RUN apt-get update && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
-    && apt-get install -y google-chrome-stable \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
@@ -48,8 +46,10 @@ RUN adduser --disabled-password --no-create-home django-user && \
 RUN /py/bin/pip install --upgrade pip && \
     /py/bin/pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-RUN /py/bin/pip install selenium && \
-    /py/bin/pip install webdriver-manager
+RUN /py/bin/pip install embedchain && \ 
+    /py/bin/pip install --upgrade 'embedchain[postgres]'
+
+RUN /py/bin/pip install docx2txt
 
 RUN mkdir -p /home/django-user/.cache/huggingface && \
     chown -R django-user:django-user /home/django-user/.cache/huggingface

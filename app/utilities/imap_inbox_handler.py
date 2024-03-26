@@ -205,8 +205,6 @@ class ImapInboxHandler:
 
             df_final = pl.DataFrame({'text': X_test, 'label_hf': labels.tolist(), 'Id': df_unseen_emails['Id'].cast(pl.Int64)})                      
             
-            logging.info("df_final with hf tag", df_final)
-
             df_unseen_emails = df_unseen_emails.with_columns(df_unseen_emails['Id'].cast(pl.Int64))
             donot_answer_mail_ids = list(map(int, donot_answer_mail_ids))
             reply_email_ids = list(map(int, reply_email_ids))
@@ -218,13 +216,9 @@ class ImapInboxHandler:
                 df_reply_emails['label_hf'].replace([1], [0])
             )
 
-            logging.info("df_reply_emails with hf tag changed", df_reply_emails)
-
             df_final = df_final.join(df_reply_emails, on='Id', how='left').fill_null(df_final['label_hf'])
             df_final = df_final.drop(['text_right', 'label_hf'])
             df_final = df_final.rename({'label_hf_right': 'label'})
-
-            logging.info("df_final with reply tag", df_final)
 
             df_no_reply = df_final.filter(pl.col('Id').is_in(donot_answer_mail_ids)) 
 
@@ -235,8 +229,6 @@ class ImapInboxHandler:
             df_final = df_final.join(df_no_reply, on='Id', how='left').fill_null(df_final['label'])            
             df_final = df_final.drop(['text_right', 'label'])
             df_final = df_final.rename({'label_right': 'label'})
-
-            logging.info("df_final", df_final)
             
             clean_ids = []
             clean_emails= []           
@@ -246,7 +238,6 @@ class ImapInboxHandler:
                     clean_ids.append(df_final['Id'][i])
                     
             df_final_to_csv = df_unseen_emails.filter(pl.col('Id').is_in(clean_ids))
-            logging.info("df_final_to_csv:", df_final_to_csv)
 
             df_final = df_final.with_columns(df_final['Id'].cast(str)) 
 
