@@ -7,6 +7,7 @@ from utilities.get_rag_response import get_rag_response
 
 celery = Celery('tasks', broker='redis://redis:6379/0')
 
+
 @shared_task
 def process_unseen_emails():
     try:        

@@ -7,6 +7,7 @@ ENV HF_HOME /home/django-user/.cache/huggingface/hub
 COPY ./requirements.txt /tmp/requirements.txt
 COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 
+
 COPY ./app /app
 WORKDIR /app
 COPY ./scripts /scripts
@@ -33,7 +34,6 @@ RUN python -m venv /py && \
     /py/bin/python -m ensurepip && \
     /py/bin/pip install --upgrade pip
 
-# Removed the pip config set global.use-feature 2020-resolver line
 
 RUN rm -rf /tmp
 
