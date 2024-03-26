@@ -13,7 +13,7 @@ KEYWORD = 'FROM'
 EMAIL_CREDENTIALS = {
     "email": os.environ.get("IMAP_EMAIL"),
     "password": os.environ.get("IMAP_PASSWORD"),
-    "imap_server": os.environ.get("IMAP_SERVER"),
+    "imap_server": os.environ.get("IMAP_HOST"),
 }
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
